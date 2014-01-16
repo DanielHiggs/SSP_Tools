@@ -112,6 +112,30 @@ classdef KorenLimiter < SSP_Tools.Discretizers.Discretizer
 			parameters = [];
 		end
 		
+		function repr_struct = get_repr(obj)
+			repr_struct = struct();
+			
+			% Get the name of our class
+			objclass = metaclass(obj);
+			repr_struct.Class = objclass.Name;
+			
+			% Get the name of our method
+			repr_struct.Name = obj.name;
+			
+		end
+		
+		function id_string = repr(obj)
+			% Provide a textual representation of the object
+			% that a human can use to identify it
+			
+			repr_struct = obj.get_repr();
+			
+			id_fmt = '< %s >';
+			
+			id_string = sprintf(id_fmt, repr_struct.Class );
+		end
+		
+		
 		function clone = copy(obj)
 			meta = metaclass(obj);
 			clone = eval([ meta.Name, '()' ]);
