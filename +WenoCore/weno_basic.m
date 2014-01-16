@@ -1,7 +1,7 @@
-function u_x = weno_basic(dx, u, f, em, epsilon, p, wenokernel, gp)
+function u_x = weno_basic(dx, u, t, f, em, epsilon, p, wenokernel, gp)
 	
 	% Split the numerical flux into positive and negative components
-	fu = f(u);
+	fu = f(u, t);
 	u_em = 0.5*em*u;
 	fp = 0.5*fu + u_em;
 	fm = 0.5*fu - u_em;
