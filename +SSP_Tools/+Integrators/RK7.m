@@ -4,7 +4,10 @@ classdef RK7 < SSP_Tools.Integrators.RK
 			obj = obj@SSP_Tools.Integrators.RK(varargin{:});			
 			
 			obj.name = 'Fehlberg 7th Order Runge-Kutta';
+			
 			obj.order = 7;
+			obj.steps = 1;
+			obj.r = 0;
 			
 			A = zeros(10, 10);
 			

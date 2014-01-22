@@ -17,6 +17,8 @@ classdef ODE23S < SSP_Tools.Integrators.Integrator
 			
 			obj.name = 'Matlab''s ODE23S';
 			obj.order = 5;
+			obj.steps = 1;
+			obj.r = 0;
 			
 			obj.ode_opts = struct();
 			if ~isempty(p.Results.AbsTol)

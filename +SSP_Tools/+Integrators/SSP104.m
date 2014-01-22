@@ -9,7 +9,8 @@ classdef SSP104 < SSP_Tools.Integrators.SSPRK
 			obj = obj@SSP_Tools.Integrators.SSPRK('coefficients', coefficients, varargin{:});			
 
 			obj.name = 'SSP(10,4)';
-			
+			obj.steps = 1;
+			obj.stages = 10;
 			obj.order = 4;
 			obj.r = 6;
 		end

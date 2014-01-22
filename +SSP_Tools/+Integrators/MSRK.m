@@ -73,10 +73,6 @@ classdef MSRK < SSP_Tools.Integrators.Integrator
 		TrelEnd;
 		% Used in our miniature time-stepping
 		
-		steps;
-		% Given that these are multistep methods, this is the number
-		% of steps used by the method.
-		
 		last_dt;
 		% Since this is a multistep method, we need to ensure that it's always
 		% advanced by the same dt. This will be checked and a warning will be
@@ -169,6 +165,7 @@ classdef MSRK < SSP_Tools.Integrators.Integrator
 				obj.S = length(obj.B);
 				obj.K = length(obj.theta);
 				obj.steps = obj.K;
+				obj.stages = obj.S;
 			end
 			
 			% Construct the values for the abscissas

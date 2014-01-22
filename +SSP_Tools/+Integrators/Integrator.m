@@ -12,6 +12,8 @@ classdef Integrator < handle
 	
 		name;			% Name of time-stepping method.
 		order;		% Theoretical order of convergence
+		stages;     % Number of stages
+		steps;      % Number of steps
 		r;				% Theoretical SSP max(dt)
 		verbose;
 

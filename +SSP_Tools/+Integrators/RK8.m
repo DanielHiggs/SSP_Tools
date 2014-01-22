@@ -6,6 +6,10 @@ classdef RK8 < SSP_Tools.Integrators.RK
 			name = 'Fehlberg 8th Order Runge-Kutta';
 			A = zeros(13, 13);
 			
+			obj.order = 8;
+			obj.steps = 1;
+			obj.r = 0;
+			
 			A(2,1) = 2/27;
 			
 			A(3,1) = 1/36;

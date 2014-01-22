@@ -14,6 +14,7 @@ classdef RK4 < SSP_Tools.Integrators.RK
 			obj.c = [ 0, 1/2, 1/2, 1];
 			
 			obj.order = 4;
+			obj.steps = 1;
 			obj.r = 0;
 		end
 		

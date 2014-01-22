@@ -17,6 +17,8 @@ classdef RK5 < SSP_Tools.Integrators.RK
 			obj.c = [ 0, 1/5, 3/10, 4/5, 8/9, 1, 1];
 
 			obj.order = 5;
+			obj.steps = 1;
+			obj.r = 0;
 		end
 		
 		function parameters = get_parameters(obj)

@@ -8,6 +8,7 @@ classdef RK3 < SSP_Tools.Integrators.Integrator
 			obj	= obj@SSP_Tools.Integrators.Integrator(varargin{:});
 			obj.name = 'RK3';
 			obj.order = 3;
+			obj.steps = 1;
 			obj.r = 1.0;
 		end
 	
