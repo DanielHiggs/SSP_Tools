@@ -57,13 +57,19 @@ classdef Advection < SSP_Tools.TestProblems.PDE
 			flux = obj.a*u;
 		end
 		
+		function fp = fp(obj, u, x);
+			fp = obj.a;
+		end
+	
+		function em = em(obj, u);
+			em = max(abs(obj.fp(u, obj.x)));
+		end
+	
 	end
 	
 	methods(Static)
 
-		function em = em(u, t);
-			em = 1.0;
-		end
+
 	end
 
 end
