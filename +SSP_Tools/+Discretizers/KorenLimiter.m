@@ -3,7 +3,7 @@ classdef KorenLimiter < SSP_Tools.Discretizers.Discretizer
 	properties
 	
 		% name
-		name = 'First order finite difference method';
+		name = 'Center Difference with Koren Limiter';
 	
 		f = [];
 	
@@ -35,26 +35,9 @@ classdef KorenLimiter < SSP_Tools.Discretizers.Discretizer
 				obj.D = (-eye(grid_size) + diag(ones(1, grid_size-1), 1))/dx;
 			end
 		end
-		
-		function [u_plus, u_minus] = split_flux(obj, x, u, t)
-			% Split the flux into positive and negative components
-			% using a Lax-Freidrichs flux-splitting scheme.
-			
-			% Calculate em
-			if isa(obj.em, 'function_handle')
-				em = obj.em(u, t);
-			else
-				em = obj.em;
-			end
-			
-			fu = obj.f(u, t);
-			u_em = 0.5*em*u;
-			u_plus = 0.5*fu + u_em;
-			u_minus = 0.5*fu - u_em;
-		end
-		
+				
 		function L = upwind_approx(obj, x, u, t)
-		
+				
 			fHCL = obj.f;
 			dx = max(diff(x));
 			
@@ -91,20 +74,22 @@ classdef KorenLimiter < SSP_Tools.Discretizers.Discretizer
 			% Obtain an approximation of the derivative u_x
 			
 			% Append the ghost points
-			u_gp = [ u(end-obj.gp:end-1), u, u(2:obj.gp+1) ];
+%  			u_gp = [ u(end-obj.gp:end-1), u, u(2:obj.gp+1) ];
+			u_gp = u;
 			
-			[u_plus, u_minus] = obj.split_flux(x, u_gp, t);
-			
-			if isempty(obj.D)
-				obj.make_diff_matrix(x, 1)
-			end
-			
-			upwind_flux = obj.upwind_approx(x, u_minus(end:-1:1)', t)';
-			upwind_flux = upwind_flux(end:-1:1);
-			downwind_flux = obj.upwind_approx(x, u_plus', t)';
+%  			[u_plus, u_minus] = obj.split_flux(x, u_gp, t);
 
-			u_x = upwind_flux + downwind_flux;
-			u_x = u_x(obj.gp+1:end-obj.gp)';
+%  			upwind_flux = obj.upwind_approx(x, u_minus(end:-1:1)', t)';
+%  			upwind_flux = upwind_flux(end:-1:1);
+
+%  			upwind_flux = obj.upwind_approx(x, u_minus', t)';
+%  			upwind_flux = upwind_flux;
+
+			u_x = obj.upwind_approx(x, u_gp', t)';
+			u_x = u_x';
+%  			u_x = -upwind_flux + downwind_flux;
+%  			u_x = u_x';
+%  			u_x = u_x(obj.gp+1:end-obj.gp)';
 		end
 			
 		
