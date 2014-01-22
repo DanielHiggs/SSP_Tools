@@ -199,6 +199,7 @@ classdef PDE < SSP_Tools.TestProblems.TestProblem
 			p.addParamValue('dt', []);
 			p.addParamValue('cfl', []);
 			p.addParamValue('tolT', []);
+			p.addParamValue('verbose', []);
 			p.parse(varargin{:});
 			
 			% We can't have BOTH a dt and a cfl specified
