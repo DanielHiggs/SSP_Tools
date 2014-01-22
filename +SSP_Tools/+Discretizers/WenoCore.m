@@ -116,11 +116,7 @@ classdef WenoCore < SSP_Tools.Discretizers.Discretizer
 			end
 			
 			% Calculate em
-			if isa(obj.em, 'function_handle')
-				em = obj.em(u, t);
-			else
-				em = obj.em;
-			end
+			em = obj.em(u);
 		
 			% Append ghost points
 			u_gp = [ u(end-obj.gp:end-1), u, u(2:obj.gp+1) ];

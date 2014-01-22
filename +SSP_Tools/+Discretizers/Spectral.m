@@ -26,11 +26,7 @@ classdef Spectral < SSP_Tools.Discretizers.Discretizer
 			% using a Lax-Freidrichs flux-splitting scheme.
 			
 			% Calculate em
-			if isa(obj.em, 'function_handle')
-				em = obj.em(u, t);
-			else
-				em = obj.em;
-			end
+			em = obj.em(u);
 			
 			fu = obj.f(u, t);
 			u_em = 0.5*em*u;
