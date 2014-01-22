@@ -47,7 +47,7 @@ classdef SSP < SSP_Tools.Tests.Test
 			results = {};
 			completed_problems = {};
 
-			dt_test_value = floor(1e3*0.90*(obj.problem_template.integrator.r/100))/1e3;
+			dt_test_value = 0.001;
 			dt_test_increment = 1e-3;
 			initial_t_end = 1/8;
 			
@@ -142,7 +142,12 @@ classdef SSP < SSP_Tools.Tests.Test
 				
 			end
 
-			results = struct('max_dt', dt_test_value, 'r', problem.integrator.r );
+			results = struct('max_dt', dt_test_value, ...,
+			                 's', problem.integrator.stages, ...
+			                 'k', problem.integrator.steps, ...
+			                 'p', problem.integrator.order, ...
+			                 'dx', min(diff(problem.x)), ...
+			                 'r', problem.integrator.r );
 			obj.print('Largest Max dt=%f\n', dt_test_value);
 			obj.print('Theoretial Max dt=%f\n\n', obj.problem_template.integrator.r/100);
 			
