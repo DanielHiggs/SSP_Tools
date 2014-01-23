@@ -13,6 +13,10 @@ classdef LNL < SSP_Tools.Integrators.RK
 			dir_seps = strfind(package_path, '/');
 			package_path = package_path(1:dir_seps(end-1));
 			obj.coefficient_directory = [package_path, 'Method Coefficients/LNL Methods (LNL)'];
+			
+			% All LNL methods are single step methods
+			obj.steps = 1;
+			
 		end
 		
 	end

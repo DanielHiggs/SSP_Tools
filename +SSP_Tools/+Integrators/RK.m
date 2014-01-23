@@ -46,6 +46,9 @@ classdef RK < SSP_Tools.Integrators.Integrator
 			addParamValue(p,'name', []);
 			p.parse(varargin{:});
 
+			% All RK methods are single-step
+			obj.steps = 1;
+			
 			
 			% Load the coefficients if specified.
 			if isstr(p.Results.coefficients)
