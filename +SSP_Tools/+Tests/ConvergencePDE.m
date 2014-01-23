@@ -159,7 +159,7 @@ classdef ConvergencePDE < SSP_Tools.Tests.Convergence
 			output = {};
 			
 			output{end+1} = sprintf('Convergence Test Results');
-			output{end+1} = sprintf('Problem: %s u(x,0)=%s T=%f', obj.problem_template.name, func2str(obj.problem_template.uinit), obj.t);
+			output{end+1} = sprintf('Problem: %s u(x,0)=%s [%d, %d] T=%f', obj.problem_template.name, func2str(obj.problem_template.uinit), obj.problem_template.domain(1), obj.problem_template.domain(2), obj.t);
 			output{end+1} = sprintf('Spatial Discretization: %s', obj.problem_template.discretizer.name);
 			output{end+1} = sprintf('Time-Stepping Method: %s', obj.problem_template.integrator.name );
 			output{end+1} = sprintf('----------------------------------------------------');
@@ -254,6 +254,16 @@ classdef ConvergencePDE < SSP_Tools.Tests.Convergence
 			end
 		end
 		
+		function [status, variables] = import(obj)
+		% Import test results into current workspace
+			assignin('base', 'results', obj.results);
+			assignin('base', 'problems', obj.completed_problems);
+
+			variables = struct('name', {'results', 'problems'},... 
+			                   'description', {'Test results', 'Problem Objects'} );
+			status = 0;
+		end
+		
 		function [status, files] = save(obj, prefix)
 		% Save all of our data 
 			
@@ -331,6 +341,11 @@ classdef ConvergencePDE < SSP_Tools.Tests.Convergence
 			parameters = [ parameters{:}];
 		end
 		
+		function commands = get_commands(obj)
+		% Return a structure containing information about the
+		% commands supported by this class.
+			commands = struct('name', {'import', 'save'});
+		end
 	
 	end
 
