@@ -376,9 +376,9 @@ classdef MSRK < SSP_Tools.Integrators.Integrator
 			
 			parameters{end+1} = coefficient_parameter;
 
-			parameters{end+1} = struct('keyword', {{'initial_integrator', 'mini_dt_type', 'mini_dt_c'}}, ...
-			                           'type', 'option_group', ...
-			                           'name', 'Multistep Setup', ...
+			parameters{end+1} = struct('keyword', 'priming methods', ...
+			                           'type', 'function_defined', ...
+			                           'name', 'Priming Method Setup', ...
 			                           'longname', 'Options for Multistep Configuration', ...
 			                           'options', @obj.get_parameters_multistep, ...
 			                           'default', [] );
@@ -387,20 +387,20 @@ classdef MSRK < SSP_Tools.Integrators.Integrator
 			
 		end
 		
-		function parameters = get_parameters_multistep(obj, varargin)
+		function [parameter_desc, out_parameters] = get_parameters_multistep(obj, in_parameters, all_parameters)
 		% This function allows us to apply a little logic to the kinds of parameters
 		% seen by a factory method. The factory method keeps calling this function with
 		% the set of keyword parameters it controls until an empty array is returned.
 		%
 		% This function manages 'initial_integrator', 'mini_dt_type', and 'mini_dt_c'
 		%
-
+		
 			p = inputParser;
-			
+			p.KeepUnmatched = true;
 			p.addParamValue('initial_integrator', []);
 			p.addParamValue('mini_dt_type', []);
 			p.addParamValue('mini_dt_c', []);
-			p.parse(varargin{:});
+			p.parse(in_parameters);
 			
 			initial_integrator = p.Results.initial_integrator;
 			mini_dt_type = p.Results.mini_dt_type;
@@ -422,18 +422,20 @@ classdef MSRK < SSP_Tools.Integrators.Integrator
 																'longname', 'RK4', ...
 																'unneeded', []);
 				
-				parameters = struct('keyword', 'initial_integrator', ...
+				parameter_desc = struct('keyword', 'initial_integrator', ...
 										'type', 'list', ...
 										'name', 'initial_integrator', ...
 										'longname', 'Initial Integration Method', ...
 										'options', [initial_integrators{:}], ...
 										'default', 'use-exact' );
+				out_parameters = [];
 				return
 			end
 			
 			if strcmp(initial_integrator, 'use-exact')
 				% We selected an exact value
-				parameters = [];
+				parameter_desc = [];
+				out_parameters = in_parameters;
 				return
 			elseif ~isempty(initial_integrator) & isempty(mini_dt_type) & isempty(mini_dt_c)
 					ministep_options = {};
@@ -444,25 +446,27 @@ classdef MSRK < SSP_Tools.Integrators.Integrator
 																'longname', 'fractional c*dt' );
 					ministep_options = [ministep_options{:}];
 																
-					parameters = struct('keyword',  'mini_dt_type', ...
+					parameter_desc = struct('keyword',  'mini_dt_type', ...
 											'type', 'list', ...
 											'name', 'mini_dt_type', ...
 											'longname', 'Initial Integrator dt step type', ...
 											'options', ministep_options, ...
 											'default', 'compatible' );
-					
+					out_parameters = in_parameters;
 					return                       
 			elseif ~isempty(initial_integrator) & ~isempty(mini_dt_type) & isempty(mini_dt_c)
-					parameters = struct('keyword', 'mini_dt_c', ...
+					parameter_desc = struct('keyword', 'mini_dt_c', ...
 											'type', 'double', ...
 											'name', 'mini_dt_c', ...
 											'longname', 'c', ...
 											'options', [], ...
 											'default', 1.0 );
+					out_parameters = in_parameters;
 					return
 			elseif ~isempty(initial_integrator) & ~isempty(mini_dt_type) & ~isempty(mini_dt_c)
 				% All three parameters have been set
-				parameters = [];
+				out_parameters = in_parameters;
+				parameter_desc = [];
 				return
 			end
 		end
