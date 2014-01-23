@@ -20,15 +20,22 @@ classdef Animation < handle
 			p.addParamValue('directory', []);
 			p.addParamValue('t', []);
 			p.addParamValue('dt', []);
+			p.addParamValue('cfl', []);
 			p.addParamValue('problem', []);
 			p.parse(varargin{:});
 			
 			verbose = false;
-			
-			obj.t = p.Results.t;
-			obj.dt = p.Results.dt;
-			obj.directory = p.Results.directory;
+
 			obj.problem = p.Results.problem;
+			obj.t = p.Results.t;
+			obj.directory = p.Results.directory;
+			
+			if ~isempty(p.Results.cfl)
+				obj.dt = p.Results.cfl*min(diff(obj.problem.x));
+			else
+				obj.dt = p.Results.dt;
+			end
+			
 		end
 		
 		function run(obj)
@@ -93,23 +100,87 @@ classdef Animation < handle
 			                           'options', [],...
 			                           'default', 1.0);
 
-			parameters{end+1} = struct('keyword', 'dt',...
-			                           'name', 'dt',...
-			                           'longname', 'Step size (leave blank for cfl=0.2)',...
-			                           'type', 'double',...
-			                           'options', [],...
-			                           'default', []);
-			
 			parameters{end+1} = struct('keyword', 'problem',...
 			                           'name', 'Example Problem',...
 			                           'longname', 'Fully-formed Example Problem',...
 			                           'type', 'full_problem',...
 			                           'options', struct('type', 'SSP_Tools.TestProblems.PDE'),...
 			                           'default', []);
+			
+			parameters{end+1} = struct('keyword', 'dt',...
+			                           'name', 'dt',...
+			                           'type', 'function_defined', ...
+			                           'longname', 'Options for timesteping',...
+			                           'options', @obj.get_parameters_dt, ...
+			                           'default', []);
+		
 		
 			parameters = [ parameters{:}];
 		end
+		
+		function [parameter_desc, out_parameters] = get_parameters_dt(obj, in_parameters, all_parameters)
+		% This function provides dynamic configuration parameters for kinds of timestepping available
+		% given the type of problem being used. It's meant to be called iteratively in a parameter
+		% definition of the type 'function_defined'. The first time it's called it returns a dummy
+		% parameter asking whether the timestepping should be in terms of dt or cfl. Subsequent calls
+		% will return valid parameters for dt or cfl.
+			p = inputParser;
+			p.KeepUnmatched = true;
+			p.addParamValue('dt', [])
+			p.addParamValue('cfl', [])
+			p.addParamValue('dt_cfl_selection', []);
+			p.parse(in_parameters);
 			
+			dt = p.Results.dt;
+			cfl = p.Results.cfl;
+			dt_cfl_selection = p.Results.dt_cfl_selection;
+			
+			dt_or_cfl_options = [ struct('name', 'dt', 'value', 'dt'), struct('name', 'cfl', 'value', 'cfl') ];
+			
+			if ~isempty(dt) | ~isempty(cfl)
+				parameter_desc = [];
+				out_parameters = in_parameters;
+				return
+			end
+			
+			if isa(all_parameters.problem, 'SSP_Tools.TestProblems.PDE')
+				% We've already selected a PDE
+				if isempty(dt_cfl_selection)
+					% Ask whether it should be a dt or CFLs by returning a dummy
+					% parameter. 
+					parameter_desc = struct();
+					parameter_desc.keyword = 'dt_cfl_selection';
+					parameter_desc.name = 'dt_or_cfl';
+					parameter_desc.longname = 'Time Stepping Type';
+					parameter_desc.type = 'option_list';
+					parameter_desc.options = dt_or_cfl_options;
+					parameter_desc.default = [];
+					out_parameters = [];
+				elseif strcmp(dt_cfl_selection, 'dt')
+					parameter_desc = struct();
+					parameter_desc.keyword = 'dt';
+					parameter_desc.name = 'dt';
+					parameter_desc.longname = 'dt';
+					parameter_desc.type = 'double';
+					parameter_desc.options = [];
+					parameter_desc.default = 0.01;
+					out_parameters = [];
+				elseif strcmp(dt_cfl_selection, 'cfl')
+					parameter_desc = struct();
+					parameter_desc.keyword = 'cfl';
+					parameter_desc.name = 'cfl';
+					parameter_desc.longname = 'cfl c*dx';
+					parameter_desc.type = 'double';
+					parameter_desc.options = [];
+					parameter_desc.default = 0.2;
+					out_parameters = [];
+				end
+			elseif isa(all_parameters.problem, 'SSP_Tools.TestProblems.ODE')
+				error('ODE Problems Not Supported')
+			end
+		end
+		
+		
 	end
 	
 	methods(Static)
