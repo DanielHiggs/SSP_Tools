@@ -115,6 +115,7 @@ classdef ODE < SSP_Tools.TestProblems.TestProblem
 			p = inputParser;
 			p.addParamValue('dt', []);
 			p.addParamValue('tolT', []);
+			p.addParamValue('verbose', []);
 			p.parse(varargin{:});
 			
 			if ~isempty(p.Results.dt)
