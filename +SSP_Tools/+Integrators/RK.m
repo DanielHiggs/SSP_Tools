@@ -83,6 +83,15 @@ classdef RK < SSP_Tools.Integrators.Integrator
 					obj.name = obj.file;
 				end
 				
+				if isfield(parameters, 'r')
+					obj.r = parameters.r;
+				end
+
+				if isfield(parameters, 'p')
+					obj.order = parameters.p;
+				end
+				
+				
 			elseif ~isempty(p.Results.A) && ~isempty(p.Results.B)
 				obj.alpha = p.Results.A;
 				obj.b = p.Results.B;
@@ -96,6 +105,10 @@ classdef RK < SSP_Tools.Integrators.Integrator
 			else
 				obj.solver = SSP_Tools.utils.MatlabSolver();
 			end
+			
+			% Number of stages
+			obj.stages = size(obj.alpha, 1);
+			
 		end
 		
 		function [y_next, varargout] = advance(obj,y,t,dt)
