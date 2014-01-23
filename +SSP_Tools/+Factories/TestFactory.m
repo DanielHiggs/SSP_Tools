@@ -56,17 +56,16 @@ classdef TestFactory < handle
 			obj.list();
 			n = input('Select a Test: ');
 			method = obj.available_tests(n);
+
 			
 			fprintf('Configuration options\n\n');
 			
-			init = struct();
+			init_params = struct();
+
 			for i=1:numel(method.parameters)
 				
 				keyword = method.parameters(i).keyword;
-				parameter_name = method.parameters(i).longname;
-				default_value = method.parameters(i).default;
-				options = method.parameters(i).options;
-				type_value = method.parameters(i).type;
+				type = method.parameters(i).type;
 				
 				if strcmp(keyword, ignored_parameters)
 					% If we've been asked to ignore a parameter
@@ -74,62 +73,107 @@ classdef TestFactory < handle
 					% prototype) skip it.
 					continue
 				end
+								
+				if strcmp(type, 'function_defined')
+				% If the parameter is of this type, the actual parameter is defined by
+				% calling a function with whatever parameters we currently have defined.
+				% This is so one parameter can be dependent on another even if they're not
+				% very tightly grouped.
+					parameter_function = method.parameters(i).options;
+					while true
+						[parameter_desc, additional_params] = parameter_function(additional_params, init_params);
+						if isempty(parameter_desc)
+							break
+						else
+							new_params = obj.parse_parameter(parameter_desc);
+							
+							% Merge them into our parameters
+							fields = fieldnames(new_params);
+							for in=1:numel(fields)
+								additional_params.(fields{in}) = new_params.(fields{in});
+							end
+						end
+					end
+				else
+					parameter_desc = method.parameters(i);
+					additional_params = obj.parse_parameter(parameter_desc);
+				end
 				
-
-				if strcmp(type_value, 'double')
-					query_string = sprintf('%s %s [%g]:', parameter_name, ...
-																		keyword, ...
-																		default_value );
-					init.(keyword) = input(query_string); 
-					if isempty(init.(keyword))
-						init.(keyword) = method.parameters(i).default;
-					end
-				elseif strcmp(type_value, 'string')
-					query_string = sprintf('%s %s [%s]:', parameter_name, ...
-																     keyword, ...
-																     default_value );
-					init.(keyword) = input(query_string); 
-					if isempty(init.(keyword))
-						init.(keyword) = method.parameters(i).default;
-					end
-				elseif strcmp(type_value, 'integer')
-					query_string = sprintf('%s %s [%d]:', parameter_name, ...
-																     keyword, ...
-																     default_value );
-					init.(keyword) = input(query_string); 
-					if isempty(init.(keyword))
-						init.(keyword) = method.parameters(i).default;
-					end
-				elseif strcmp(type_value, 'vector')
-					query_string = sprintf('%s %s:', parameter_name, ...
-																keyword );
-					init.(keyword) = input(query_string); 
-					if isempty(init.(keyword))
-						init.(keyword) = method.parameters(i).default;
-					end
-				elseif strcmp(type_value, 'option_list')
-					fprintf('\n\nSelect %s:\n', parameter_name);
-					for idx=1:numel(options)
-						fprintf('[%i] %s\n', idx, options(idx).name);
-					end
-					idx = input('Selection: ');
-					init.(keyword) = options(idx).value;
-					if isempty(init.(keyword))
-						init.(keyword) = default_value;
-					end
-				elseif strcmp(type_value, 'problem')
-					factory = SSP_Tools.Factories.ProblemFactory();
-					init.(keyword) = factory.select('type', options.type,...
-					                                'ignored_parameters', options.ignored_parameters );
-				elseif strcmp(type_value, 'full_problem')
-					factory = SSP_Tools.Factories.ProblemFactory();
-					init.(keyword) = factory.select('type', options.type );
+				% Now we add the parameter(s)/value(s) to the struct that will be used
+				% to intitialize the SSP_Tools.Integrators.Integrator object.
+				fields = fieldnames(additional_params);
+				for in=1:numel(fields)
+					init_params.(fields{in}) = additional_params.(fields{in});
 				end
 			end
 			
-			method = feval(method.class, init);
+			method = feval(method.class, init_params);
 		end 
+
+		function init = parse_parameter(obj, parameter)
+		% This function parses information about a method's parameter and
+		% provides the user with the appropriate prompts for setting
+		% that parameter. It returns a structure.
 		
+			init = struct();
+		
+			keyword = parameter.keyword;
+			parameter_name = parameter.name;
+			parameter_desc = parameter.longname;
+			default_value = parameter.default;
+			type = parameter.type; 
+			options = parameter.options;
+
+			if strcmp(type, 'double')
+				query_string = sprintf('%s %s [%g]:', parameter_desc, ...
+																	keyword, ...
+																	default_value );
+				init.(keyword) = input(query_string); 
+				if isempty(init.(keyword))
+					init.(keyword) = default_value;
+				end
+			elseif strcmp(type, 'string')
+				query_string = sprintf('%s %s [%s]:', parameter_desc, ...
+																	keyword, ...
+																	default_value );
+				init.(keyword) = input(query_string); 
+				if isempty(init.(keyword))
+					init.(keyword) = default_value;
+				end
+			elseif strcmp(type, 'integer')
+				query_string = sprintf('%s %s [%d]:', parameter_desc, ...
+																	keyword, ...
+																	default_value );
+				init.(keyword) = input(query_string); 
+				if isempty(init.(keyword))
+					init.(keyword) = default_value;
+				end
+			elseif strcmp(type, 'vector')
+				query_string = sprintf('%s %s:', parameter_desc, ...
+															keyword );
+				init.(keyword) = input(query_string); 
+				if isempty(init.(keyword))
+					init.(keyword) = default_value;
+				end
+			elseif strcmp(type, 'option_list')
+				fprintf('\n\nSelect %s:\n', parameter_desc);
+				for idx=1:numel(options)
+					fprintf('[%i] %s\n', idx, options(idx).name);
+				end
+				idx = input('Selection: ');
+				init.(keyword) = options(idx).value;
+				if isempty(init.(keyword))
+					init.(keyword) = default_value;
+				end
+			elseif strcmp(type, 'problem')
+				factory = SSP_Tools.Factories.ProblemFactory();
+				init.(keyword) = factory.select('type', options.type,...
+															'ignored_parameters', options.ignored_parameters );
+			elseif strcmp(type, 'full_problem')
+				factory = SSP_Tools.Factories.ProblemFactory();
+				init.(keyword) = factory.select('type', options.type );
+			end
+		end
 		
 	end
 

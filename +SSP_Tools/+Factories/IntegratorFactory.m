@@ -76,29 +76,24 @@ classdef IntegratorFactory < handle
 			
 			init_params = struct();
 			
-			unneeded_parameters = {};
-			
 			for i=1:numel(method.parameters)			
 
 				keyword = method.parameters(i).keyword;
-				
-				if iscell(keyword)
-					% We're dealing with a group of parameters whose presence is
-					% controlled by a function we're provided.
-					
-					additional_params = struct();
-					for keyword_in_group=keyword
-						additional_params = setfield(additional_params, keyword_in_group{:}, []);
-					end
-					
+				type = method.parameters(i).type;
+				additional_params = struct();
+
+				if strcmp(type, 'function_defined')
+				% If the parameter is of this type, the actual parameter is defined by
+				% calling a function with whatever parameters we currently have defined.
+				% This is so one parameter can be dependent on another even if they're not
+				% very tightly grouped.
 					parameter_function = method.parameters(i).options;
-					
 					while true
-						parameter_desc = parameter_function(additional_params);
+						[parameter_desc, additional_params] = parameter_function(additional_params, init_params);
 						if isempty(parameter_desc)
 							break
 						else
-							new_params = parse_parameter(parameter_desc);
+							new_params = obj.parse_parameter(parameter_desc);
 							
 							% Merge them into our parameters
 							fields = fieldnames(new_params);
@@ -107,11 +102,9 @@ classdef IntegratorFactory < handle
 							end
 						end
 					end
-				elseif any(strcmp(unneeded_parameters, keyword))
-					continue;
 				else
 					parameter_desc = method.parameters(i);
-					additional_params = parse_parameter(parameter_desc);
+					additional_params = obj.parse_parameter(parameter_desc);
 				end
 				
 				% Now we add the parameter(s)/value(s) to the struct that will be used
@@ -121,56 +114,51 @@ classdef IntegratorFactory < handle
 					init_params.(fields{in}) = additional_params.(fields{in});
 				end				
 			end
+		end
 			
-			function init = parse_parameter(parameter)
-			% This function parses information about a method's parameter and
-			% provides the user with the appropriate prompts for setting
-			% that parameter. It returns a structure.
+		function init = parse_parameter(obj, parameter)
+		% This function parses information about a method's parameter and
+		% provides the user with the appropriate prompts for setting
+		% that parameter. It returns a structure.
+		
+			init = struct();
+		
+			keyword = parameter.keyword;
+			parameter_name = parameter.name;
+			default_value = parameter.default;
+			type = parameter.type; 
+			options = parameter.options;
 			
-				init = struct();
-			
-				keyword = parameter.keyword;
-				parameter_name = parameter.name;
-				default_value = parameter.default;
-				type = parameter.type; 
-				options = parameter.options;
-				
-				if strcmp(type, 'text')
-					query_string = sprintf('%s %s [%s]:', parameter_name, ...
-																		keyword, ...
-																		default_value );
-					init.(keyword) = input(query_string); 
-					if isempty(init.(keyword))
-						init.(keyword) = method.parameters(i).default;
-					end
-				elseif strcmp(type, 'double')
-					query_string = sprintf('%s %s [%g]:', parameter_name, ...
-																	  keyword, ...
-																 	  default_value );
-					init.(keyword) = input(query_string); 
-					if isempty(init.(keyword))
-						init.(keyword) = method.parameters(i).default;
-					end
-				elseif strcmp(type, 'file_list')
-					fprintf('\nSelect %s:\n', parameter_name);
-					for j=1:numel(options.files)
-						fprintf('[%i] %s\n', j, options.files{j});
-					end
-					n_coeff = input('Select Coefficient File: ');
-					init.(keyword) = [ options.path, '/', options.files{n_coeff}];
-					
-				elseif strcmp(type, 'list')
-					for j=1:numel(options)
-						fprintf('[%i] %s\n', j, options(j).longname);
-					end
-					n_selection = input(sprintf('Select %s [%s]: ', parameter_name, default_value));
-					init.(keyword) = [ options(n_selection).name];
-					
-					if isfield(options(n_selection), 'unneeded') & ~isempty(options(n_selection).unneeded)
-						unneeded_parameters = [unneeded_parameters, options(n_selection).unneeded];
-					end
-					
+			if strcmp(type, 'text')
+				query_string = sprintf('%s %s [%s]:', parameter_name, ...
+																	keyword, ...
+																	default_value );
+				init.(keyword) = input(query_string); 
+				if isempty(init.(keyword))
+					init.(keyword) = default_value;
 				end
+			elseif strcmp(type, 'double')
+				query_string = sprintf('%s %s [%g]:', parameter_name, ...
+																	keyword, ...
+																	default_value );
+				init.(keyword) = input(query_string); 
+				if isempty(init.(keyword))
+					init.(keyword) = default_value;
+				end
+			elseif strcmp(type, 'file_list')
+				fprintf('\nSelect %s:\n', parameter_name);
+				for j=1:numel(options.files)
+					fprintf('[%i] %s\n', j, options.files{j});
+				end
+				n_coeff = input('Select Coefficient File: ');
+				init.(keyword) = [ options.path, '/', options.files{n_coeff}];
+				
+			elseif strcmp(type, 'list')
+				for j=1:numel(options)
+					fprintf('[%i] %s\n', j, options(j).longname);
+				end
+				n_selection = input(sprintf('Select %s [%s]: ', parameter_name, default_value));
+				init.(keyword) = [ options(n_selection).name];
 			end
 		end 
 		
