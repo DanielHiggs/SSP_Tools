@@ -36,7 +36,13 @@ classdef Convergence < SSP_Tools.Tests.Test
 			% Run the test and print out the results.
 			obj.verbose = true;
 			obj.run_test();
-		end 
+		end
+		
+		function commands = get_commands(obj)
+		% Return a structure containing information about the
+		% commands supported by this class.
+			commands = struct('name', {'import', 'save'});
+		end
 			
 	end
 	

@@ -180,6 +180,12 @@ classdef Animation < handle
 			end
 		end
 		
+		function commands = get_commands(obj)
+		% Return a structure containing information about the
+		% commands supported by this class.
+			commands = struct();
+		end
+		
 		
 	end
 	

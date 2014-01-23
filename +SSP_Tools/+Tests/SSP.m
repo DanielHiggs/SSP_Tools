@@ -77,6 +77,7 @@ classdef SSP < SSP_Tools.Tests.Test
 					skip = 0;
 				end
 				
+				
 				% The value of dt we're testing, multiplied by the number of 
 				% steps used by the method may exceed t_end. If so,
 				% extend t_end so that we can get a few good steps before we hit
@@ -148,6 +149,7 @@ classdef SSP < SSP_Tools.Tests.Test
 			                 'p', problem.integrator.order, ...
 			                 'dx', min(diff(problem.x)), ...
 			                 'r', problem.integrator.r );
+			obj.results = results;
 			obj.print('Largest Max dt=%f\n', dt_test_value);
 			obj.print('Theoretial Max dt=%f\n\n', obj.problem_template.integrator.r/100);
 			
@@ -173,6 +175,16 @@ classdef SSP < SSP_Tools.Tests.Test
 			                           'default', []);
 		
 			parameters = [ parameters{:}];
+		end
+		
+		function [status, variables] = import(obj)
+		% Import test results into current workspace
+			assignin('base', 'results', obj.results);
+			assignin('base', 'problems', obj.completed_problems);
+
+			variables = struct('name', {'results', 'problems'},... 
+			                   'description', {'Test results', 'Problem Objects'} );
+			status = 0;
 		end
 		
 		function [status, files] = save(obj, prefix)
@@ -204,6 +216,13 @@ classdef SSP < SSP_Tools.Tests.Test
 			
 			status = 0;
 		end
+		
+		function commands = get_commands(obj)
+		% Return a structure containing information about the
+		% commands supported by this class.
+			commands = struct('name', {'import'});
+		end
+		
 	end
 	
 	methods(Static)

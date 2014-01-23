@@ -164,6 +164,16 @@ classdef ConvergenceODE < SSP_Tools.Tests.Convergence
 			
 		end		
 		
+		function [status, variables] = import(obj)
+		% Import test results into current workspace
+			assignin('base', 'results', obj.results);
+			assignin('base', 'problems', obj.completed_problems);
+
+			variables = struct('name', {'results', 'problems'},... 
+			                   'description', {'Test results', 'Problem Objects'} );
+			status = 0;
+		end
+		
 		function [status, files] = save(obj, prefix)
 		% Save all of our data 
 			
@@ -223,6 +233,12 @@ classdef ConvergenceODE < SSP_Tools.Tests.Convergence
 			                           'default', []);
 		
 			parameters = [ parameters{:}];
+		end
+	
+		function commands = get_commands(obj)
+		% Return a structure containing information about the
+		% commands supported by this class.
+			commands = struct('name', {'import', 'save'});
 		end
 	
 	end

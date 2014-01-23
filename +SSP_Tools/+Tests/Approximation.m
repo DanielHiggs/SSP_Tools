@@ -24,11 +24,18 @@ classdef Approximation < SSP_Tools.Tests.Test
 			p.addParamValue('problem', []);
 			p.addParamValue('t', []);
 			p.addParamValue('dt', []);
+			p.addParamValue('cfl', []);
 			p.parse(varargin{:});
 			
 			obj.t = p.Results.t;
-			obj.dt = p.Results.dt;
 			obj.problem = p.Results.problem;
+			
+			if ~isempty(p.Results.cfl)
+				obj.dt = p.Results.cfl*min(diff(obj.problem.x));
+			else
+				obj.dt = p.Results.dt;
+			end
+
 			
 			obj.name = 'Simple Approximation';
 
@@ -38,28 +45,23 @@ classdef Approximation < SSP_Tools.Tests.Test
 		function run(obj)
 			% Run the test and print out the results.
 			obj.verbose = true;
-			obj.run_test();
+			problem = obj.run_test();
 		end 
 		
-		function run_test(obj)
+		function results = run_test(obj)
 		
 			% We can't go backwards with our approximation,
 			% so raise an error if we're asked to approximate
 			% a value of t that's less than where we're currently
 			% at.
 			
-			obj.problem.setup_problem();			
+			if isa(obj.problem, 'SSP_Tools.TestProblems.ODE')
+				obj.problem.setup_problem();
+			end
+			
 			obj.problem.approximate(obj.t, 'dt', obj.dt, 'verbose', @obj.log);
 			
-			t = obj.problem.t(end);
-			y_comp = obj.problem.y(end);
-			y_exact = obj.problem.get_exact_solution();
-			y_exact = y_exact(end);
-			y_error = abs(y_comp - y_exact);
-
-			obj.print('Problem: %s\n', obj.problem.name);
-			obj.print('Time Stepping Method: %s, dt=%g\n', obj.problem.integrator.name, obj.problem.dt);
-			obj.print('y(%g)=%g, exact=%g (%6.5g)', t, y_comp, y_exact(end), y_error);
+			results = obj.problem;
 			
 		end
 		
@@ -67,40 +69,16 @@ classdef Approximation < SSP_Tools.Tests.Test
 		% Save all of our data 
 			
 			files = {};
-			
-			if exist(prefix, 'dir')
-				% the directory already exists
-				status = 1;
-				return
-			end
-				
-			mkdir('./', prefix);
-			
-			% Save the log
-			logfile = [prefix, '/', sprintf('%s_log.txt', prefix) ]
-			fid = fopen(logfile, 'w');
-			cellfun(@(line) fprintf(fid, line), obj.output_buffer);
-			fclose(fid);
-			files{end+1} = logfile;
-			
-			% Save the results
-			resultsfile = [prefix, '/', sprintf('%s_results.txt', prefix) ];
-			fid = fopen(resultsfile, 'w');
-			cellfun(@(line) fprintf(fid, line), obj.report_buffer);
-			fclose(fid);
-			files{end+1} = resultsfile;
-			
-			% Save a plot
-			plotfile = [prefix, '/', sprintf('%s_solution.eps', prefix) ];
-			fig = obj.problem.plot();
-			figure(fig);
-			print(plotfile, '-depsc2'),
-			close(fig);
-			files{end+1} = resultsfile;
-			
 			status = 0;
+			
 		end
 		
+		function [status, variables] = import(obj)
+		% Import test results into current workspace
+			assignin('base', 'problem', obj.problem);
+			variables = struct('name', 'problem', 'description', 'Problem Object');
+			status = 0;
+		end
 		
 		function parameters = get_parameters(obj)
 			
@@ -110,7 +88,7 @@ classdef Approximation < SSP_Tools.Tests.Test
 			                           'name', 'Example Problem',...
 			                           'longname', 'Fully-formed Example Problem',...
 			                           'type', 'full_problem',...
-			                           'options', struct('type', 'SSP_Tools.TestProblems.ODE'),...
+			                           'options', struct('type', 'SSP_Tools.TestProblems.TestProblem'),...
 			                           'default', []);
 			                           
 			parameters{end+1} = struct('keyword', 't',...
@@ -120,14 +98,89 @@ classdef Approximation < SSP_Tools.Tests.Test
 			                           'options', [],...
 			                           'default', 1.0);
 		
-			parameters{end+1} = struct('keyword', 'dt',...
-			                           'name', 'dt',...
-			                           'longname', 'Step Size',...
-			                           'type', 'double',...
-			                           'options', [],...
-			                           'default', 0.1);
+			parameters{end+1} = struct('keyword', 'timestep',...
+			                           'name', 'timestep',...
+			                           'longname', 'Options For Time Step Configuration',...
+			                           'type', 'function_defined',...
+			                           'options', @obj.get_parameters_dt, ...,...
+			                           'default', []);
 		
 			parameters = [ parameters{:}];
+		end
+		
+		function [parameter_desc, out_parameters] = get_parameters_dt(obj, in_parameters, all_parameters)
+		% This function provides dynamic configuration parameters for kinds of timestepping available
+		% given the type of problem being used. It's meant to be called iteratively in a parameter
+		% definition of the type 'function_defined'. The first time it's called it returns a dummy
+		% parameter asking whether the timestepping should be in terms of dt or cfl. Subsequent calls
+		% will return valid parameters for dt or cfl.
+			p = inputParser;
+			p.KeepUnmatched = true;
+			p.addParamValue('dt', [])
+			p.addParamValue('cfl', [])
+			p.addParamValue('dt_cfl_selection', []);
+			p.parse(in_parameters);
+			
+			dt = p.Results.dt;
+			cfl = p.Results.cfl;
+			dt_cfl_selection = p.Results.dt_cfl_selection;
+			
+			dt_or_cfl_options = [ struct('name', 'dt', 'value', 'dt'), struct('name', 'cfl', 'value', 'cfl') ];
+			
+			if ~isempty(dt) | ~isempty(cfl)
+				parameter_desc = [];
+				out_parameters = in_parameters;
+				return
+			end
+			
+			if isa(all_parameters.problem, 'SSP_Tools.TestProblems.PDE')
+				% We've already selected a PDE
+				if isempty(dt_cfl_selection)
+					% Ask whether it should be a dt or CFLs by returning a dummy
+					% parameter. 
+					parameter_desc = struct();
+					parameter_desc.keyword = 'dt_cfl_selection';
+					parameter_desc.name = 'dt_or_cfl';
+					parameter_desc.longname = 'Time Stepping Type';
+					parameter_desc.type = 'option_list';
+					parameter_desc.options = dt_or_cfl_options;
+					parameter_desc.default = [];
+					out_parameters = [];
+				elseif strcmp(dt_cfl_selection, 'dt')
+					parameter_desc = struct();
+					parameter_desc.keyword = 'dt';
+					parameter_desc.name = 'dt';
+					parameter_desc.longname = 'dt';
+					parameter_desc.type = 'double';
+					parameter_desc.options = [];
+					parameter_desc.default = 0.01;
+					out_parameters = [];
+				elseif strcmp(dt_cfl_selection, 'cfl')
+					parameter_desc = struct();
+					parameter_desc.keyword = 'cfl';
+					parameter_desc.name = 'cfl';
+					parameter_desc.longname = 'cfl c*dx';
+					parameter_desc.type = 'double';
+					parameter_desc.options = [];
+					parameter_desc.default = 0.2;
+					out_parameters = [];
+				end
+			elseif isa(all_parameters.problem, 'SSP_Tools.TestProblems.ODE')
+				parameter_desc = struct();
+				parameter_desc.keyword = 'dt';
+				parameter_desc.name = 'dt';
+				parameter_desc.longname = 'dt';
+				parameter_desc.type = 'double';
+				parameter_desc.options = [];
+				parameter_desc.default = 0.01;
+				out_parameters = [];			
+			end
+		end
+		
+		function commands = get_commands(obj)
+		% Return a structure containing information about the
+		% commands supported by this class.
+			commands = struct('name', 'import');
 		end
 	
 	end
