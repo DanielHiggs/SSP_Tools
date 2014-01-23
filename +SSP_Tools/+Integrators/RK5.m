@@ -18,6 +18,7 @@ classdef RK5 < SSP_Tools.Integrators.RK
 
 			obj.order = 5;
 			obj.steps = 1;
+			obj.stages = 5;
 			obj.r = 0;
 		end
 		

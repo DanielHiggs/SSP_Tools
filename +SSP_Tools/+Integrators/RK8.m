@@ -8,6 +8,7 @@ classdef RK8 < SSP_Tools.Integrators.RK
 			
 			obj.order = 8;
 			obj.steps = 1;
+			obj.stages = 8;
 			obj.r = 0;
 			
 			A(2,1) = 2/27;

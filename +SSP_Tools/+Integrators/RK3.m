@@ -9,6 +9,7 @@ classdef RK3 < SSP_Tools.Integrators.Integrator
 			obj.name = 'RK3';
 			obj.order = 3;
 			obj.steps = 1;
+			obj.stages = 3;
 			obj.r = 1.0;
 		end
 	

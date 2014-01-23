@@ -7,6 +7,7 @@ classdef RK7 < SSP_Tools.Integrators.RK
 			
 			obj.order = 7;
 			obj.steps = 1;
+			obj.stages = 7;
 			obj.r = 0;
 			
 			A = zeros(10, 10);
