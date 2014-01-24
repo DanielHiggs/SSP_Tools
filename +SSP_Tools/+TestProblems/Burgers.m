@@ -30,7 +30,7 @@ classdef Burgers < SSP_Tools.TestProblems.PDE
 			u_exact = zeros(size(obj.u));
 
 			for i=1:length(u_exact)
-				func = @(u) u - obj.uinit(obj.x(i) - obj.fp(u, obj.x, t)*t);
+				func = @(u) u - obj.uinit(obj.x(i) - obj.fp(u, obj.x)*t);
 				u_exact(i) = fzero(func, obj.u(i), optimset('Display', 'off', 'TolFun', 1e-16, 'TolX', 1e-16));
 			end
 		end
