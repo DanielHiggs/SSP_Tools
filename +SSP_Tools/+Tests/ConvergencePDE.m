@@ -273,13 +273,10 @@ classdef ConvergencePDE < SSP_Tools.Tests.Convergence
 			
 			files = {};
 			
-			if exist(prefix, 'dir')
-				% the directory already exists
-				status = 1;
-				return
+			if ~exist(prefix, 'dir')
+				% the directory doesn't exist
+				mkdir(prefix);
 			end
-				
-			mkdir('./', prefix);
 			
 			% Save the log
 			logfile = [prefix, '/', sprintf('%s_log.txt', prefix) ]

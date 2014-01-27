@@ -177,10 +177,9 @@ classdef Positivity < SSP_Tools.Tests.Test
 			
 			files = {};
 			
-			if exist(prefix, 'dir')
-				% the directory already exists
-				status = 1;
-				return
+			if ~exist(prefix, 'dir')
+				% the directory doesn't exist
+				mkdir(prefix);
 			end
 				
 			mkdir('./', prefix);
