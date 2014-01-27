@@ -47,15 +47,30 @@ classdef TestFactory < handle
 			% Select and configure a method
 			
 			p = inputParser;
+			p.addParamValue('name', []);
 			p.addParamValue('ignored_parameters', {});
 			p.parse(varargin{:});
 			
 			ignored_parameters = p.Results.ignored_parameters;
 			
-			% Print a list of available methods
-			obj.list();
-			n = input('Select a Test: ');
-			method = obj.available_tests(n);
+			if isempty(p.Results.name)
+				% Print a list of available methods
+				% And interactively select one.
+				obj.list();
+				n = input('Select a Test: ');
+				method = obj.available_tests(n);
+			else
+				% Select a test by comparing p.Results.name against
+				% the 'name' field of obj.available_tests and 
+				% select the one that matches.
+				name_cmp = strcmp({obj.available_tests.name}, p.Results.name);
+				if name_cmp > 1
+					error('More than one test found');
+				else
+					n = find(name_cmp);
+					method = obj.available_tests(n);
+				end
+			end
 
 			
 			fprintf('Configuration options\n\n');
