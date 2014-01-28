@@ -49,7 +49,7 @@ classdef SSPRK < SSP_Tools.Integrators.Integrator
 			end
 			
 			if exist('parameters')
-				obj.S = size(parameters.alpha,2);
+				obj.stages = size(parameters.alpha,2);
 				
 				if obj.isModifiedShuOsher(parameters)
 					obj.alpha = parameters.alpha;
@@ -57,14 +57,14 @@ classdef SSPRK < SSP_Tools.Integrators.Integrator
 					obj.v = parameters.v;	
 				else
 					m = size(obj.alpha,1);
-					obj.alpha = [ zeros(1,obj.S); parameters.alpha];
+					obj.alpha = [ zeros(1,obj.stages); parameters.alpha];
 					obj.alpha = [ zeros(m, 1), obj.alpha ];
 					obj.alpha(2,1) = 1.0;
 					
-					obj.beta = [ zeros(1,obj.S); parameters.beta ];
+					obj.beta = [ zeros(1,obj.stages); parameters.beta ];
 					obj.beta = [ zeros(m, 1), obj.beta ];
 					
-					obj.v = [1; zeros(obj.S,1)];
+					obj.v = [1; zeros(obj.stages,1)];
 				end
 			end
 			
@@ -74,7 +74,7 @@ classdef SSPRK < SSP_Tools.Integrators.Integrator
 				obj.beta = sparse(obj.beta);
 				obj.v = sparse(obj.v);
 			
-				X=eye(obj.S)-obj.alpha(1:end-1,:);
+				X=eye(obj.stages)-obj.alpha(1:end-1,:);
 				A=X\obj.beta(1:end-1,:);
 				b=obj.beta(end,:)+obj.alpha(end,:)*A; b=b';
 				obj.c=sum(A,2)';
