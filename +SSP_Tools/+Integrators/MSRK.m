@@ -25,10 +25,7 @@ classdef MSRK < SSP_Tools.Integrators.Integrator
 		p = [];
 		% This indicates the order of the method. It comes from the code that
 		% Zack's been using to search for these methods, hence the label 'p'. 
-
-		K = [];
-		% The number of steps used by the method.
-				
+		
 		%%% As this is a multistep method, this class implicitly "remembers"
 		%%% previous steps as columns in the following two variables. Both are
 		%%% treated as circular queues. As new steps are added, unneeded steps
@@ -160,16 +157,16 @@ classdef MSRK < SSP_Tools.Integrators.Integrator
 			% Note how many stages and steps we have.
 			if ~isempty(obj.B) & ~isempty(obj.theta)
 				obj.stages = length(obj.B);
-				obj.K = length(obj.theta);
-				obj.steps = obj.K;
+				obj.steps = length(obj.theta);
+				obj.steps = obj.steps;
 				obj.stages = obj.stages;
 			end
 			
 			% Construct the values for the abscissas
 			if ~isempty(obj.Ahat) & ~isempty(obj.A)
 				Anew=[obj.Ahat,obj.A];
-				es=ones(obj.K-1+obj.stages,1);
-				ll = [obj.K-1:-1:0]';
+				es=ones(obj.steps-1+obj.stages,1);
+				ll = [obj.steps-1:-1:0]';
 				obj.c=(Anew*es-obj.D*ll)';
 			end
 						
@@ -218,7 +215,7 @@ classdef MSRK < SSP_Tools.Integrators.Integrator
 			
 			
 			% If we already have enough steps, remove the oldest step.
-			if size(obj.U,2) == obj.K
+			if size(obj.U,2) == obj.steps
 				obj.U = obj.U(:,2:end);
 				obj.FU = obj.FU(:,2:end);
 			end
@@ -283,7 +280,7 @@ classdef MSRK < SSP_Tools.Integrators.Integrator
 			
 			u_next = u;
 			
-			if size(obj.U,2) >= obj.K-1
+			if size(obj.U,2) >= obj.steps-1
 				% We have enough previous approximations recorded to
 				% satisfy the multistep method.
 				obj.method_primed = true;
@@ -310,7 +307,7 @@ classdef MSRK < SSP_Tools.Integrators.Integrator
 			B = obj.kron_products.B;
 			BHAT = obj.kron_products.BHAT;
 			THETA = obj.kron_products.THETA;
-			Ahat = [ obj.Ahat, zeros( size(obj.Ahat,1), obj.K-size(obj.Ahat,2))];
+			Ahat = [ obj.Ahat, zeros( size(obj.Ahat,1), obj.steps-size(obj.Ahat,2))];
 			
 			
 			FY = zeros(size(Y));
