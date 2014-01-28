@@ -28,9 +28,6 @@ classdef MSRK < SSP_Tools.Integrators.Integrator
 
 		K = [];
 		% The number of steps used by the method.
-		
-		S = [];
-		% The number of stages used by the method.
 				
 		%%% As this is a multistep method, this class implicitly "remembers"
 		%%% previous steps as columns in the following two variables. Both are
@@ -162,16 +159,16 @@ classdef MSRK < SSP_Tools.Integrators.Integrator
 			
 			% Note how many stages and steps we have.
 			if ~isempty(obj.B) & ~isempty(obj.theta)
-				obj.S = length(obj.B);
+				obj.stages = length(obj.B);
 				obj.K = length(obj.theta);
 				obj.steps = obj.K;
-				obj.stages = obj.S;
+				obj.stages = obj.stages;
 			end
 			
 			% Construct the values for the abscissas
 			if ~isempty(obj.Ahat) & ~isempty(obj.A)
 				Anew=[obj.Ahat,obj.A];
-				es=ones(obj.K-1+obj.S,1);
+				es=ones(obj.K-1+obj.stages,1);
 				ll = [obj.K-1:-1:0]';
 				obj.c=(Anew*es-obj.D*ll)';
 			end
@@ -296,7 +293,7 @@ classdef MSRK < SSP_Tools.Integrators.Integrator
 		function u_next = step_with_msrk(obj, u, t, dt)
 	
 			stage_size = length(u);
-			Y = zeros(stage_size*obj.S, 1);
+			Y = zeros(stage_size*obj.stages, 1);
 			
 			% In order to handle the situation where length(u) > 1, we need
 			% some kronnecker products. Since these only depend on length(u)
@@ -318,7 +315,7 @@ classdef MSRK < SSP_Tools.Integrators.Integrator
 			
 			FY = zeros(size(Y));
 			
-			for i=1:obj.S
+			for i=1:obj.stages
 				block = (i-1)*length(u)+1:i*length(u);
 				lincombSteps = bsxfun(@times, obj.D(i,:), obj.U);
 				lincombFusteps = bsxfun(@times,Ahat(i,:),obj.FU);
