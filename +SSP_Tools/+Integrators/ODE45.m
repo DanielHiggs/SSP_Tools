@@ -18,6 +18,8 @@ classdef ODE45 < SSP_Tools.Integrators.Integrator
 			obj.name = 'Matlab''s ODE45';
 			obj.order = 5;
 			obj.steps = 1;
+			obj.stages = 5;
+			
 			obj.r = 0;
 			
 			obj.ode_opts = struct();
