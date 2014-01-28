@@ -158,8 +158,6 @@ classdef MSRK < SSP_Tools.Integrators.Integrator
 			if ~isempty(obj.B) & ~isempty(obj.theta)
 				obj.stages = length(obj.B);
 				obj.steps = length(obj.theta);
-				obj.steps = obj.steps;
-				obj.stages = obj.stages;
 			end
 			
 			% Construct the values for the abscissas
