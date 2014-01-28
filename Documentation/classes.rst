@@ -91,7 +91,25 @@ SSP_Tools.Integrators
 	.. mat:method:: repr()
 	
 		Return a formatted text string with information about the current integrator and the
-		parameters it was configured with. 		
+		parameters it was configured with. 
+		
+	.. mat:method:: get_parameters()
+	
+		Return an ordered structure array describing the method-specific arguments needed by the constructor.
+		
+		========  =====================================================
+		field     description
+		========  =====================================================
+		keyword   The name of the argument received by the constructor
+		type      The type of argument that's expected
+		name      A shorthand name for the argument
+		longname  A longer description of the argument
+		options   Some options governing the selection of arguments
+		default   A sensible default value for the argument
+		========  =====================================================
+		
+		For a full discussion about writing a user interface for ``SSP_Tools``, see
+		TestSuite 
 
 	All ``Integrator`` objects also have the these private methods:
 		
@@ -426,12 +444,49 @@ BackwardEuler
 LNL
 +++
 
+.. class:: SSP_Tools.Integrators.LNL
+
+	Linear/Non-Linear SSP Methods. Descendent of :mat:class:`SSP_Tools.Integrators.SSPRK`.
+
+	This class is a descendent of :mat:class:`SSP_Tools.Integrators.SSPRK`. For a full description
+	of object attributes, and methods see the documentation for the parent class.
+	
+	.. mat:method:: LNL ('yPrimeFunc', <>, ['yInFunc', <>, 'yOutFunc', <>, 'Problem', <>, 'log', <>])
+
+		This class takes no additional constructor arguments than those required by 
+		:mat:meth:`SSP_Tools.Integrators.SSPRK`
+
 MSRK
 ++++
 
 
 SSP_Tools.Discretizers
 ----------------------
+
+.. note::
+
+	Due to the limited needs of the research driving the development of ``SSP_Tools``, support for 
+	spatial discretization methods isn't as developed as it should be. Right now, all schemes assume
+	periodic boundaries where x(1) == x(end). Future releases of ``SSP_Tools`` may correct this.
+
+.. class:: SSP_Tools.Discretizers.Discretizer
+
+	Parent class for all spatial discretization methods in ``SSP_Tools``.
+	
+	.. method:: L(x,u)
+	
+		Return an approximation of :math:`u_x` over the domain `x`. 
+	
+	.. method:: copy
+
+		Return a new copy of the ``Discretizer`` object minus any stateful information.
+		
+		This can be used to get an exact copy of the object for use in discretizing a different problem.
+		
+	.. method:: repr
+	
+	.. method:: get_parameters
+
 
 FiniteDifference
 ++++++++++++++++
@@ -444,6 +499,27 @@ Spectral
 
 WenoCore
 ++++++++
+
+.. class:: SSP_Tools.Discretizers.WenoCore
+
+	Wrapper class for the WenoCore routines.
+	
+	.. method:: WenoCore('f', <>, 'em', <>, 'kernel', <>[, 'weno_fcn', <>, 'epsilon', <>, 'p'])
+	
+		Initialize a WenoCore object.
+		
+		`f` is a function handle.  :math:`f(u)_x`.
+		
+		`em` is another function handle. :math:`f'(u)`.
+		
+		`epsilon` is the WENO shape parameter. Defaults to 1e-16.
+		
+		`p` is the other WENO shape parameter. Defaults to 2.
+		
+		`kernel` selects which WENO kernel to use. Currently the options are 'WENO5', 'WENO9', 'WENO11', 'WENO13'
+		and 'WENO15'.
+		
+		`weno_fcn` optionally chooses the WENO routine that's used, though the default @WenoCore.weno_basic
 
 
 SSP_Tools.TestProblems
