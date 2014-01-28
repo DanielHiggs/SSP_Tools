@@ -6,24 +6,38 @@ Classes
 	:maxdepth: 4
 	:hidden:
 	
-	self
-
 
 SSP_Tools.Integrators
 ---------------------
 
-.. mat:class:: SSP_Tools.Integrators.Integrator('yPrimeFunc', <>, ['yInFunc', <>, 'yOutFunc', <>, 'Problem', <>, 'log', <>])
+.. mat:class:: SSP_Tools.Integrators.Integrator
 
 	Parent class for all Single- and Multistep Integration Methods for ODEs.
-
-	:param callback yPrimeFunc(y): Function returning the value of :math:`y'=f(x)`
-	:param callback yInFunc(y): Pre-processing function
-	:param callback yOutFunc(y): Post-processing function
-	:param Problem: Problem object
-	:type Problem: SSP_Tools.TestProblems.TestProblem
-	:param callback log(str): Logging function
 	
+	.. mat:method:: Integrator('yPrimeFunc', <>, ['yInFunc', <>, 'yOutFunc', <>, 'Problem', <>, 'log', <>])
 	
+		Construct an :mat:class:`SSP_Tools.Integrators.Integrator` object.
+		
+		``yPrimeFunc`` ODE function. Callback that accepts a single vector argument containing the current
+		function values :math:`y` and returns a single vector containing the value of :math:`y'`. 
+		
+		``yInFunc`` (optional) Pre-processing function. Callback that accepts a single argument containing
+		function values :math:`y` in any format and returns them as a stacked column vector. See :mat:attr:`yInFunc`
+		for a complete description.
+		
+		``yOutFunc`` (optional) Post-processing function. Callback that accepts a single argument containing
+		the values of :math:`y` as a stacked column vector and returns them in whatever format is desired. This
+		callback should perform the inverse of ``yInFunc``. See :mat:attr:`yOutFunc` for a complete discussion.
+	
+		``Problem`` (optional) :mat:class:`SSP_Tools.TestProblems.TestProblem` object. Some specialized 
+		integration routines might need additional information/control over the problem. See :mat:attr:`ProblemObject`
+		for more information.
+	
+		``log`` (optional) Logging callback. The ``Integrator`` object may elect to provide useful warnings
+		or information to the console via :mat:func:`fprintf` while it is running. If this callback is provided
+		that output can be redirected to a different function that could include it in an overall logging 
+		facility. The callback should have the same signature as :mat:func:`sprintf`. 
+		
 	All descendents of this class have the following public attributes:
 	
 	.. mat:attribute:: name
@@ -48,11 +62,43 @@ SSP_Tools.Integrators
 	
 		The theoretical Strong Stablilty Preserving coefficient of the method. Empty if not applicable. 
 		
-	All descendents of this class have the following semi-private attributes
+	All descendents of this class have the following public methods
 	
-	.. mat:attribute:: log(str)
+	.. mat:method:: step(y,t,dt)
+	
+		Starting with the initial value `y` at current time `t`, integrate to time `t+dt` and return the new
+		value of :math:`y(t+\Delta{t})`. 
+		
+		This may be placed within a loop to step an ODE or PDE forward.
+		
+		By default, `y` is a column vector, and the function returns a single column vector, though it is 
+		possible to provide it in any shape or format provided that :mat:attr:`yInFunc` and :mat:attr:`yOutFunc` 
+		have been set with callbacks to appropriate routines to reformat `y` into a column vector and transform 
+		the integrated output back to whatever 'native' format `y` was originally in. See Using 2d Domains. 
+		
+		`t` must be a scalar number. It is up to whatever is calling :mat:meth:`step`
+		to provide a value of `t` that fits the current problem, and no protection is provided against :mat:meth:`step`
+		being called with a value of `t` that is less than what it was previously called with.
+		
+		This is a public wrapper for the private :mat:meth:`advance` method that performs the actual integration.
+		
+	.. mat:method:: copy()
+	
+		Return a new copy of the ``Integrator`` object minus any stateful information.
+		
+		This can be used to get an exact copy of the object for use in integrating a different problem.
+		
+	.. mat:method:: repr()
+	
+		Return a formatted text string with information about the current integrator and the
+		parameters it was configured with. 		
+
+	All ``Integrator`` objects also have the these private methods:
+		
+	.. mat:attribute:: log(varargin)
 	
 		A logging function called whenever the method needs to print diagnostic information to the console.
+		The signature of this function matches those of :mat:func:`sprintf`. 
 		
 	.. mat:attribute:: yPrimeFunc(y,t)
 	
@@ -61,21 +107,21 @@ SSP_Tools.Integrators
 	
 	.. mat:attribute:: yInFunc(y)
 	
-		Optional pre-processing function. Called prior to integration with the function values `y`.
+		Optional pre-processing function to reformat the `y` passed to :mat:meth:`step` into a stacked column vector prior to being 
+		passed to :mat:meth:`advance`. 
 		
 		This function is intended for situations where the function values may exist in a format or shape
 		that is not a single column vector such as a two-dimensional PDE where `y` might be stored in a matrix.
-		In that scenerio, `yInFunc` might be used to reshape `y` into a stacked column vector. 
+		
+		See Using 2d Domains
 		
 	.. mat:attribute:: yOutFunc(y)
 	
-		Optional post-processing function. Called after integration with the function values `y` provided as a
-		single column vector.
+		Optional post-processing function to reformat the stacked column vector returned by :mat:meth:`advance`
+		into the desired format to be returned by :mat:meth:`step`.
 		
 		This function is intended for situations where the function values may exist in a format or shape
 		that is not a single column vector such as a two-dimensional PDE where `y` might be stored in a matrix.
-		In that scenerio, `yOutFunc` might perform the inverse of `yInFunc` and reshape the stacked column
-		vector into whatever native form `y` exists in outside of this class.
 	
 	.. mat:attribute:: solver
 	
@@ -94,15 +140,7 @@ SSP_Tools.Integrators
 		Currently, the only method that uses this is SSP_Tools.Integrators.DWRK which needs access to 
 		the discretizer in order to obtain a downwinded approximation of the spatial derivative.
 		
-	All descendents of this class have the following public methods
-	
-	.. mat:method:: step(y,t,dt)
-	
-		Starting with the initial value `y` at time `t`, integrate to time `t+dt`
-		
-	.. mat:method:: copy()
-	
-		Return a nearly exact copy of the Integrator object minus any stateful information.
+
 		
 	All descendents of this class have the following semi-private methods
 	
@@ -112,41 +150,65 @@ SSP_Tools.Integrators
 		
 		:mat:class:`SSP_Tools.Integrators.MSRK` methods will do this to notify the user in situations where the stepsize (dt)
 		has changed.
+		
+	.. mat:method:: advance(y, t, dt)
+	
+		Perform the actual integration to calculate an approximation of :math:`y(t+\Delta{t})`.
+		
+		This method is undefined in the parent class and left for descendents to implement.
 
 RK3
 +++
 
-.. class:: SSP_Tools.Integrators.RK3('yPrimeFunc', <>, ['yInFunc', <>, 'yOutFunc', <>, 'Problem', <>, 'log', <>])
+.. class:: SSP_Tools.Integrators.RK3
 
-	Third order SSP Runge-Kutta Method. Also known as SSP(3,3).
+	Third order SSP Runge-Kutta method. Synonymous with SSP(3,3).
 	
-	This is a simple class that is NOT a descendent of :mat:class:`SSP_Tools.Integrators.RK` and may be used
-	as a quick reference for how Integrators may be written.
+	This class is a descendent of :mat:class:`SSP_Tools.Integrators.Integrator`. For a full description
+	of object attributes, and methods see the documentation for the parent class.
 	
-	See :mat:class:`SSP_Tools.Integrators.Integrator` for a description of the constructor's parameters.
+	.. mat:method:: RK3('yPrimeFunc', <>, ['yInFunc', <>, 'yOutFunc', <>, 'Problem', <>, 'log', <>])
+	
+		This class takes no additional constructor arguments than those required by 
+		:mat:meth:`SSP_Tools.Integrators.Integrator`
+	
+	Unlike the other classes implementing specific Runge-Kutta methods, this is a simple class that is 
+	**not** a descendent of :mat:class:`SSP_Tools.Integrators.RK` and may be used as a quick reference for 
+	how Integrators may be written.
+	
 
 RK
 ++
 
 .. class:: SSP_Tools.Integrators.RK
 
-	Class implementing generic Runge-Kutta methods.
+	Parent class for implementing generic Runge-Kutta methods.
+	
+	This class is a descendent of :mat:class:`SSP_Tools.Integrators.Integrator`. For a full description
+	of object attributes and methods see the documentation for the parent class.
 	
 	This class has two constructors: 
 	
-	.. mat:method:: RK(name, <desc>, 'A', <mat>, 'B', <vec>, 'C', <vec>)
+	.. mat:method:: RK(name, <>, 'A', <>, 'B', <>, 'C', <>, 'yPrimeFunc', <>, ['yInFunc', <>, 'yOutFunc', <>, 'Problem', <>, 'log', <>)
 	
 		Initialize an RK object from Butcher Tableau coefficients provided by the parameters `A`, `B`, and `C`.
-		The `name` parameter sets the :mat:attribute:`name` attribute of the object.
-	
-	.. mat:method:: RK('coefficients', <file>)
+		The `name` parameter sets the :mat:attr:`name` attribute of the object.
+		
+	.. mat:method:: RK('coefficients', <file>, 'yPrimeFunc', <>, ['yInFunc', <>, 'yOutFunc', <>, 'Problem', <>, 'log', <>)
 	
 		Initialize an RK object from Butcher Tableau coefficients stored in `file` which has `A`, `B`, `C` and
 		`name` are saved within. 
 		
 	See :mat:class:`SSP_Tools.Integrators.Integrator` for a complete description of these constructors' parameters.
+
+	.. note::
 	
-	Attributes
+		Neither of these constructors set :mat:attr:`SSP_Tools.Integrators.Integrator.r`. If the SSP coefficient
+		`r` is known, the attribute needs to be set after the object has been created.
+		
+	
+	In addition to those provided by :mat:class:`SSP_Tools.Integrators.Integrator`, this class has the following
+	attributes:
 	
 	.. mat:attribute:: alpha
 	
@@ -167,86 +229,196 @@ RK
 	
 	.. mat:attribute:: kron_products
 	
-		When :mat:meth:`advance` is first called, the `A`, `B`, and `C` coefficient vectors are replaced
-		by the kronnecker products :math:`A \otimes I`, :math:`B \otimes I`, and :math:`C \otimes I` where 
-		:math:`I` is a sparse :math:`(n\times{n})` identity matrix and :math:`n = length(y)`. The resulting
-		matrices are stored as a structure in :mat:attr:`kron_products` and are not recomputed on successive
-		calls to :mat:meth:`advance`.
+		When :mat:meth:`advance` is first called, the :math:`A`, :math:`B`, and :math:`C` vectors from the
+		Butcher Tableau are used to form the kronnecker products :math:`A \otimes I`, :math:`B \otimes I`, and 
+		:math:`C \otimes I` where :math:`I` is a sparse :math:`(n\times{n})` identity matrix and 
+		:math:`n = length(y)`. The resulting matrices are stored as a structure in :mat:attr:`kron_products` 
+		and are not recomputed on successive calls to :mat:meth:`advance`.
 		
-		This allows for more straightforward vectorized operations when computing the :math:`k_i` values,
+		This allows for more straightforward vectorized operations when computing the :math:`k_i` stage values,
 		especially if `y` represents a system of ODEs derived from a discretization of a PDE or the
 		Runge-Kutta method is implicit. 
 		
-		:mat:attr:`kron_products` is considered a stateful variable and thus not copied when 
+		Because the size of the matrices contained in :mat:attr:`kron_products` depends on the system
+		of ODEs being integrated, it is considered to be a stateful variable is is not copied when 
 		:mat:meth:`copy` is called on this object.
-	
-	.. mat:method:: advance(y, t, dt)
-		
-		This method is called by :mat:meth:`SSP_Tools.Integrators.Integrator.step`
-		
-		Starting with an initial condition `y(t)`, compute an approximation of the ODE at `y(t+dt)`.
-		
-		
-	
 		
 	
 RK4
 +++
 
-.. class:: SSP_Tools.Integrators.RK4('yPrimeFunc', <>, ['yInFunc', <>, 'yOutFunc', <>, 'Problem', <>, 'log', <>])
+.. class:: SSP_Tools.Integrators.RK4
 
 	Classical fourth order Runge-Kutta method. Descendent of :mat:class:`SSP_Tools.Integrators.RK`.
 
-	See :mat:class:`SSP_Tools.Integrators.Integrator` for a description of the constructor's parameters.
+	This class is a descendent of :mat:class:`SSP_Tools.Integrators.RK`. For a full description
+	of object attributes, and methods see the documentation for the parent class.
+	
+	.. mat:method:: RK4 ('yPrimeFunc', <>, ['yInFunc', <>, 'yOutFunc', <>, 'Problem', <>, 'log', <>])
+
+		This class takes no additional constructor arguments than those required by 
+		:mat:meth:`SSP_Tools.Integrators.Integrator`
 
 RK5
 +++
 
-.. class:: SSP_Tools.Integrators.RK5('yPrimeFunc', <>, ['yInFunc', <>, 'yOutFunc', <>, 'Problem', <>, 'log', <>])
+.. class:: SSP_Tools.Integrators.RK5
 
-	Fifth order Runge-Kutta method. Non-SSP.
+	Classical fourth order Runge-Kutta method. Descendent of :mat:class:`SSP_Tools.Integrators.RK`.
 
-	See :mat:class:`SSP_Tools.Integrators.Integrator` for a description of the constructor's parameters.
+	This class is a descendent of :mat:class:`SSP_Tools.Integrators.RK`. For a full description
+	of object attributes, and methods see the documentation for the parent class.
+	
+	.. mat:method:: RK5 ('yPrimeFunc', <>, ['yInFunc', <>, 'yOutFunc', <>, 'Problem', <>, 'log', <>])
 
+		This class takes no additional constructor arguments than those required by 
+		:mat:meth:`SSP_Tools.Integrators.Integrator`
 RK6
 +++
 
-.. class:: SSP_Tools.Integrators.RK6('yPrimeFunc', <>, ['yInFunc', <>, 'yOutFunc', <>, 'Problem', <>, 'log', <>])
+.. class:: SSP_Tools.Integrators.RK6
 
-	Sixth order Runge-Kutta method. Non-SSP.
+	Classical fourth order Runge-Kutta method. Descendent of :mat:class:`SSP_Tools.Integrators.RK`.
 
-	See :mat:class:`SSP_Tools.Integrators.Integrator` for a description of the constructor's parameters.
+	This class is a descendent of :mat:class:`SSP_Tools.Integrators.RK`. For a full description
+	of object attributes, and methods see the documentation for the parent class.
+	
+	.. mat:method:: RK6 ('yPrimeFunc', <>, ['yInFunc', <>, 'yOutFunc', <>, 'Problem', <>, 'log', <>])
 
+		This class takes no additional constructor arguments than those required by 
+		:mat:meth:`SSP_Tools.Integrators.Integrator`
 
 RK7
 +++
 
-.. class:: SSP_Tools.Integrators.RK7('yPrimeFunc', <>, ['yInFunc', <>, 'yOutFunc', <>, 'Problem', <>, 'log', <>])
+.. class:: SSP_Tools.Integrators.RK7
 
-	Seventh order Runge-Kutta method. Non-SSP.
+	Classical fourth order Runge-Kutta method. Descendent of :mat:class:`SSP_Tools.Integrators.RK`.
 
-	See :mat:class:`SSP_Tools.Integrators.Integrator` for a description of the constructor's parameters.
+	This class is a descendent of :mat:class:`SSP_Tools.Integrators.RK`. For a full description
+	of object attributes, and methods see the documentation for the parent class.
+	
+	.. mat:method:: RK7 ('yPrimeFunc', <>, ['yInFunc', <>, 'yOutFunc', <>, 'Problem', <>, 'log', <>])
 
+		This class takes no additional constructor arguments than those required by 
+		:mat:meth:`SSP_Tools.Integrators.Integrator`
 RK8
 +++
 
-.. class:: SSP_Tools.Integrators.RK7('yPrimeFunc', <>, ['yInFunc', <>, 'yOutFunc', <>, 'Problem', <>, 'log', <>])
+.. class:: SSP_Tools.Integrators.RK8
 
-	Eighth order Runge-Kutta method. Non-SSP.
+	Classical fourth order Runge-Kutta method. Descendent of :mat:class:`SSP_Tools.Integrators.RK`.
 
-	See :mat:class:`SSP_Tools.Integrators.Integrator` for a description of the constructor's parameters.
+	This class is a descendent of :mat:class:`SSP_Tools.Integrators.RK`. For a full description
+	of object attributes, and methods see the documentation for the parent class.
+	
+	.. mat:method:: RK8 ('yPrimeFunc', <>, ['yInFunc', <>, 'yOutFunc', <>, 'Problem', <>, 'log', <>])
 
+		This class takes no additional constructor arguments than those required by 
+		:mat:meth:`SSP_Tools.Integrators.Integrator`
+
+		
 SSPRK
 +++++
 
+.. class:: SSP_Tools.Integrators.SSPRK
+
+	Parent class for implementing SSP Runge-Kutta methods in Shu-Osher form.
+	
+	This class is a descendent of :mat:class:`SSP_Tools.Integrators.Integrator`. For a full description
+	of object attributes, and methods see the documentation for the parent class.
+	
+	This class has two constructors
+
+	.. mat:method:: SSPRK('name', <>, 'alpha', <>, 'beta', <>, 'v', <>, 'yPrimeFunc', <>, ['yInFunc', <>, 'yOutFunc', <>, 'Problem', <>, 'log', <>])
+
+		Initialize an SSPRK object from Butcher Tableau coefficients provided by the parameters `alpha`, `beta`,
+		and `v`. The `name` parameter sets the :mat:attr:`name` attribute of the object.
+	
+	.. mat:method:: SSPRK('coefficients', <>, 'yPrimeFunc', <>, ['yInFunc', <>, 'yOutFunc', <>, 'Problem', <>, 'log', <>])
+
+		Initialize an RK object from Shu-Osher coefficients stored in `file` which has `alpha`, `beta`,
+		`v`, and `name` are saved within. 
+		
+		If `coefficients` is provided as just a filename without any associated path, the file will be loaded from
+		the directory specified by :mat:attr:`coefficient_directory`. 
+		
+	In addition to the attributes defined by it's parent :mat:class:`SSP_Tools.Integrators.Integrator`, this class
+	has the following attributes:
+	
+	.. mat:attribute:: alpha
+	
+	.. mat:attribute:: beta
+	
+	.. mat:attribute:: v
+	
+	.. mat:attribute:: kron_products
+	
+		When :mat:meth:`advance` is first called, the :math:`\alpha`, :math:`\beta`, and :math:`v` vectors given in
+		Shu-Osher form are used to form the kronnecker products :math:`\alpha \otimes I`, :math:`\beta \otimes I`, and 
+		:math:`v \otimes I` where :math:`I` is a sparse :math:`(n\times{n})` identity matrix and 
+		:math:`n = length(y)`. The resulting matrices are stored as a structure in :mat:attr:`kron_products` 
+		and are not recomputed on successive calls to :mat:meth:`advance`.
+		
+		This allows for more straightforward vectorized operations when computing the :math:`k_i` stage values,
+		especially if `y` represents a system of ODEs derived from a discretization of a PDE or the
+		Runge-Kutta method is implicit. 
+		
+		Because the size of the matrices contained in :mat:attr:`kron_products` depends on the system
+		of ODEs being integrated, it is considered to be a stateful variable is is not copied when 
+		:mat:meth:`copy` is called on this object.
+	
+	.. mat:attribute:: coefficient_directory 
+	
+		Path to directory in the ``SSP_Tools`` package containing coefficients for Runge-Kutta methods in
+		Shu-Osher form.
+
+SSP104
+++++++
+
+.. mat:class:: SSP_Tools.Integrators.SSP104
+
+	Ten stage, fourth order SSP Runge-Kutta method SSP(10,4). Descendent of :mat:class:`SSP_Tools.Integrators.SSPRK`.
+	
+	.. mat:method:: SSP104('yPrimeFunc', <>, ['yInFunc', <>, 'yOutFunc', <>, 'Problem', <>, 'log', <>])
+
+		This class takes no additional constructor arguments than those required by 
+		:mat:meth:`SSP_Tools.Integrators.Integrator`
+	
 ODE23S
 ++++++
+
+.. mat:class:: SSP_Tools.Integrators.ODE23S
+
+	Wrapper class for using MATLAB's :mat:func:`ode23s` solver.
+	
+	.. mat:method:: ODE23s('RelTol', <>, 'AbsTol', <>, 'yPrimeFunc', <>, ['yInFunc', <>, 'yOutFunc', <>, 'Problem', <>, 'log', <>])
+	
+	In addition to the attributes defined by it's parent :mat:class:`SSP_Tools.Integrators.Integrator`, this class
+	has the following attributes:
+	
+	.. mat:attribute: ode_opts
+	
+		A structure containing options to pass to :mat:func:`ode23s`. Similar in nature to the one produced
+		by :mat:func:`odeset`. 
 
 ODE45
 +++++
 
-SSP104
-++++++
+.. mat:class:: SSP_Tools.Integrators.ODE45
+
+	Wrapper class for using MATLAB's :mat:func:`ode45` solver.
+	
+	.. mat:method:: ODE54('RelTol', <>, 'AbsTol', <>, 'yPrimeFunc', <>, ['yInFunc', <>, 'yOutFunc', <>, 'Problem', <>, 'log', <>])
+	
+	In addition to the attributes defined by it's parent :mat:class:`SSP_Tools.Integrators.Integrator`, this class
+	has the following attributes:
+	
+	.. mat:attribute: ode_opts
+	
+		A structure containing options to pass to :mat:func:`ode54`. Similar in nature to the one produced
+		by :mat:func:`odeset`. 
+
 
 BackwardEuler
 +++++++++++++
