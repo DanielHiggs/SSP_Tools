@@ -49,14 +49,33 @@ classdef RK < SSP_Tools.Integrators.Integrator
 			% All RK methods are single-step
 			obj.steps = 1;
 			
+			% Set the coefficient directory
+			package_path = mfilename('fullpath');
+			dir_seps = strfind(package_path, '/');
+			package_path = package_path(1:dir_seps(end-1));
+			obj.coefficient_directory = [package_path, 'Method Coefficients/Runge-Kutta (Butcher Form)'];
 			
 			% Load the coefficients if specified.
 			if isstr(p.Results.coefficients)
-				% A coefficients file has been specified. Try to load
-				% the appropriate coefficients from this file.
-				obj.file = p.Results.coefficients;
 				
-				parameters = load(obj.file);
+				% If we're just passed a filename with no path, first try looking for
+				% the file in the package directory specified by 'coefficients_directory' and
+				% if the file doesn't exist there, try the current working directory.
+				if isempty(p.Results.coefficients=='/')
+					obj.file = [obj.coefficient_directory, '/', p.Results.coefficients];
+					if ~exist(obj.file, 'file')
+						obj.file = [pwd, '/', p.Results.coefficients];
+					end
+				else
+					obj.file = p.Results.coefficients;
+				end
+				
+				% Before we load it, check that the file exists.
+				if exist(obj.file, 'file')
+					parameters = load(obj.file);
+				else
+					error(sprintf('%s File Not Found\n!', obj.file));
+				end
 				
 				if isfield(parameters, 'A')
 					obj.alpha = parameters.A;
