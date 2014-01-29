@@ -2,10 +2,6 @@ classdef WenoCore < SSP_Tools.Discretizers.Discretizer
 % This class provides an interface between the SSP_Tools and WenoCore packages
 % 
 	properties
-	
-		% This is the function f_x(u) we're approximating the 
-		% spatial derivative of
-		f = [];
 		
 		% This is the corresponding kernel function in WenoCore
 		% we're calling
@@ -20,29 +16,24 @@ classdef WenoCore < SSP_Tools.Discretizers.Discretizer
 		% The number of ghost points needed.
 		gp = [];
 		
-		% The order of accuracy of the given WENO method.
-		order = [];
-		
 		% A cached copy of the grid-spacing
 		dx = [];
 		
+		% Epsilon parameter.
 		epsilon = [];
+		
+		% p parameter.
 		p = [];
-		
-		% Boundary conditions. These don't do anything yet.
-		left_boundary = [];
-		right_boundary = [];
-		
-		% This is a human-readable name for our spatial method
-		name = [];
+				
+
 	end
 		
 	methods
 		
 		function obj = WenoCore(varargin)
+			obj = obj@SSP_Tools.Discretizers.Discretizer(varargin{:});
 			
 			p = inputParser;
-			p.addParamValue('f', []);
 			p.addParamValue('em', []);
 			p.addParamValue('epsilon', 1e-16);
 			p.addParamValue('p', 2);
@@ -50,13 +41,8 @@ classdef WenoCore < SSP_Tools.Discretizers.Discretizer
 			p.addParamValue('weno_fcn', @WenoCore.weno_basic);
 			p.parse(varargin{:});
 			
-			
 			obj.epsilon = p.Results.epsilon;
 			obj.p = p.Results.p;
-			
-			if ~isempty(p.Results.f)
-				obj.f = p.Results.f;
-			end
 			
 			if ~isempty(p.Results.em)
 				obj.em = p.Results.em;
@@ -69,6 +55,8 @@ classdef WenoCore < SSP_Tools.Discretizers.Discretizer
 			if ~isempty(p.Results.weno_fcn)
 				obj.select_weno(p.Results.weno_fcn);
 			end
+			
+			obj.name = sprintf('WENO%d', obj.order);
 			
 		end
 		
@@ -218,7 +206,7 @@ classdef WenoCore < SSP_Tools.Discretizers.Discretizer
 		end
 		
 		
-		function name = get.name(obj)
+		function name = get_name(obj)
 			repr = obj.get_repr();
 			
 			kernel_name = regexp(repr.Kernel, 'kernels\.(.*)', 'tokens');

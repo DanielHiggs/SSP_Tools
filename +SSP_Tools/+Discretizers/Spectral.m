@@ -3,22 +3,18 @@ classdef Spectral < SSP_Tools.Discretizers.Discretizer
 % This class implements a basic spectral method based on fourier collocation.
 %
 	properties
-		ghost_points;
-		gp = 0;
-		name = 'Spectral Fourier Collocation Method';
-		
-		f = [];
-		order = inf;
-		
-		left_boundary = [];
-		right_boundary = [];
-		
+	
 		Dp = [];
 		Dm = [];
+		
 	end
 	methods 
 		function obj = Spectral(varargin)
 			obj = obj@SSP_Tools.Discretizers.Discretizer(varargin{:});
+			
+			obj.name = 'Spectral Fourier Collocation Method';
+			obj.order = inf;
+			
 		end
 		
 		function [u_plus, u_minus] = split_flux(obj, x, u, t)

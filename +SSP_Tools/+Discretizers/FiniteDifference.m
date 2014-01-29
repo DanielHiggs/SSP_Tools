@@ -2,27 +2,21 @@ classdef FiniteDifference < SSP_Tools.Discretizers.Discretizer
 
 	properties
 	
-		% name
-		name = 'First order finite difference method';
-	
-		f = [];
-	
 		% Differentiation matrix
 		D = []
 		
 		% Ghost points
-		gp = 1;
+		gp = 1;		
 		
-		order = 1;
-		
-		left_boundary = [];
-		right_boundary = [];
-	
 	end
 	
 	methods
 		function obj = FiniteDifference(varargin)
 			obj = obj@SSP_Tools.Discretizers.Discretizer(varargin{:});
+			
+			obj.name = 'First order finite difference method';
+			obj.order = 1;
+			
 		end
 		
 		function make_diff_matrix(obj, x, order)
