@@ -248,6 +248,8 @@ classdef MSRK < SSP_Tools.Integrators.Integrator
 			if strcmp(obj.initial_integrator, 'use-exact')
 				% Use exact solution
 				u = obj.ProblemObject.get_exact_solution(t+dt);
+			elseif isa(obj.initial_integrator, 'function_handle')
+				u = obj.initial_integrator(t+dt);
 			elseif isa(obj.initial_integrator, 'SSP_Tools.Integrators.Integrator')
 				% Use another integrator to obtain the first few steps
 				if strcmp(obj.mini_dt_type, 'compatible')
