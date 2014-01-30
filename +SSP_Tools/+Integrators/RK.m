@@ -117,13 +117,6 @@ classdef RK < SSP_Tools.Integrators.Integrator
 				obj.c = p.Results.C;
 				obj.name = p.Results.name;
 			end
-
-			% Check if the method is explicit
-			if obj.isExplicitMethod()
-				obj.isExplicit = true;
-			else
-				obj.solver = SSP_Tools.utils.MatlabSolver();
-			end
 			
 			% Number of stages
 			obj.stages = size(obj.alpha, 1);
@@ -158,7 +151,7 @@ classdef RK < SSP_Tools.Integrators.Integrator
 			
 			T = t;
 			
-			if obj.isExplicitMethod()
+			if obj.isExplicit
 				% The method we have is explicit. Solve accordingly.
 				k = zeros(s*n, 1);
 				kP = zeros(s*n, 1);
@@ -175,7 +168,7 @@ classdef RK < SSP_Tools.Integrators.Integrator
 			else
 				% The method is implicit
 				f =  @(k) k - (V*y) - dt*ALPHA*obj.yPrimeFunc(k,t);
-				y0 = [y; repmat(zeros(n,1), size(alpha,1)-1,1)];
+				y0 = [y; repmat(zeros(n,1), size(obj.alpha,1)-1,1)];
 				[k,FVAL,EXITFLAG,OUTPUT] = obj.solver.call(f, y0);
 	
 				if EXITFLAG ~= 1
@@ -266,7 +259,7 @@ classdef RK < SSP_Tools.Integrators.Integrator
 			
 		end
 		
-		function t = isExplicitMethod(obj)
+		function t = get.isExplicit(obj)
 			%
 			% Check whether the method is explicit.
 			% 
@@ -275,35 +268,39 @@ classdef RK < SSP_Tools.Integrators.Integrator
 			% and return the result stored in this variable.
 			%
 			
-			if ~isempty(obj.isExplicit) && obj.isExplicit == true
-				t = true;
-				return
+			if ~isempty(obj.isExplicit)
+				t = obj.isExplicit;
 			end
-			
 			
 			% Exception for forward euler
 			if length(obj.alpha) == 1 & obj.alpha == 0
 				t = true;
-				return
+			elseif length(obj.alpha) == 1 & obj.alpha == 1
+			% Exception for backwards euler
+				t = false;
+			else
+				t = true;
+				i = 0;
+				while true
+					diagonal = diag(obj.alpha, i);
+					if isempty(diagonal)
+						break;
+					end
+					
+					if all(diagonal == 0)
+						i=i+1;
+						continue;
+					else
+						t = false;
+						return;
+					end
+				end
 			end
 			
-			
-			t = true;
-			i = 0;
-			while true
-				diagonal = diag(obj.alpha, i);
-				if isempty(diagonal)
-					break;
-				end
-				
-				if all(diagonal == 0)
-					i=i+1;
-					continue;
-				else
-					t = false;
-					return;
-				end
+			if t==false
+				obj.solver = SSP_Tools.utils.MatlabSolver();
 			end
+			
 		end
 	end
 end
