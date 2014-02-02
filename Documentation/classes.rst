@@ -90,8 +90,8 @@ SSP_Tools.Integrators
 		
 	.. mat:method:: repr()
 	
-		Return a formatted text string with information about the current integrator and the
-		parameters it was configured with. 
+		Return a formatted text string representation of the object containing information about the 
+		current `Integrator` and the parameters it was configured with. 
 		
 	.. mat:method:: get_parameters()
 	
@@ -459,6 +459,42 @@ LNL
 MSRK
 ++++
 
+.. class:: SSP_Tools.Integrators.MSRK
+
+	Multistep Multistage Runge-Kutta Methods
+	
+	This class has two constructors:
+	
+		.. mat:method:: MSRK( 'A', <>, 'B', <>, 'Ahat', <>, 'Bhat', <>, 'theta', <>, 'D', <>, 'initial_integrator', <>, 'mini_dt_type', <>, 'mini_dt_c', <>, 'yPrimeFunc', <>, ['yInFunc', <>, 'yOutFunc', <>, 'Problem', <>, 'log', <>]) 
+
+				`A`, `Ahat`, `B`, `Bhat`, `theta`, and `D` contain the coefficients used to specify the specific 
+				MSRK method to initialize.
+				
+				Because these are multistep methods, they are not self-starting and they require an additional 
+				:mat:class:`SSP_Tools.Integrators.Integrator` object. This object is specified using the
+				`initial_integrator` argument. For convenience, the strings 'RK3' and 'RK4' may specified to
+				automatically create and use :mat:class:`SSP_Tools.Integrators.RK3` and 
+				:mat:class:`SSP_Tools.Integrators.RK4` objects. In addition, `initial_integrator` may be specified
+				as a function handle which provides the exact solution :math:`y(t)` as a single column vector. If
+				`Problem` has been provided with an :mat:class:`SSP_Tools.TestProblems.TestProblem`, `initial_integrator`
+				may be set to 'use-exact' which will automatically obtain the exact solution from the `TestProblem` object.
+				
+				If `initial_integrator` doesn't return an exact solution, it's own timestepping must be configured.
+				`mini_dt_type` determines what type of timestepping to use when priming the MSRK method. There are
+				currently two options:
+				
+				==============  =====================
+				`mini_dt_type`  description
+				==============  =====================
+				'compatible'    mini_dt = c*dt.^(p/3)
+				'fraction'      mini_dt = c*dt
+				==============  =====================
+				
+				Regardless of which option is selected, the :math:`c` parameter is specified by `mini_dt_c`. 
+				
+				
+		.. mat:method:: MSRK( 'coefficients', <>,  'initial_integrator', <>, 'mini_dt_type', <>, 'mini_dt_c', <>, 'yPrimeFunc', <>, ['yInFunc', <>, 'yOutFunc', <>, 'Problem', <>, 'log', <>]) 
+
 
 SSP_Tools.Discretizers
 ----------------------
@@ -473,9 +509,19 @@ SSP_Tools.Discretizers
 
 	Parent class for all spatial discretization methods in ``SSP_Tools``.
 	
+	.. mat:method:: Discretizer('f', <>, 'em', <>)
+	
+		`f` is a callback that evaluates the :math:`f(u)` part of :math:`f(u)_x`.
+		
+		`em` is another callback that evaluates the value of :math:`f'(u)`.
+	
 	.. method:: L(x,u)
 	
-		Return an approximation of :math:`u_x` over the domain `x`. 
+		Return an approximation of :math:`f(u)_x` over the domain `x` using the function values `u`. 
+		
+		`x` is a one-dimensional domain of evenly-spaced gridpoints represented by a row vector.
+		
+		`u` is a column vector of the corresponding function values at those gridpoints.
 	
 	.. method:: copy
 
@@ -485,17 +531,61 @@ SSP_Tools.Discretizers
 		
 	.. method:: repr
 	
+		Return a formatted text string representation of the object containing information about the 
+		current `Discretizer` and the parameters it was configured with. 	
+	
 	.. method:: get_parameters
+	
+		Return an ordered structure array describing the method-specific arguments needed by the constructor.
+
 
 
 FiniteDifference
 ++++++++++++++++
 
+.. class:: SSP_Tools.Discretizers.FiniteDifference
+
+	First order finite difference method.
+	
+	This class is a descendent of :mat:class:`SSP_Tools.Discretizers.Discretizer`. For a full description
+	of object attributes, and methods see the documentation for the parent class.
+	
+	.. mat:method:: FiniteDifference('f', <>, 'em', <>)
+	
+		This class takes no additional constructor arguments than those required by 
+		:mat:meth:`SSP_Tools.Discretizers.Discretizer`
+
+
 KorenLimiter
 ++++++++++++
 
+.. class:: SSP_Tools.Discretizers.KorenLimiter
+
+	Second order centered difference with Koren Limiter
+	
+	This class is a descendent of :mat:class:`SSP_Tools.Discretizers.Discretizer`. For a full description
+	of object attributes, and methods see the documentation for the parent class.
+	
+	.. mat:method:: KorenLimiter('f', <>, 'em', <>)
+	
+		This class takes no additional constructor arguments than those required by 
+		:mat:meth:`SSP_Tools.Discretizers.Discretizer`
+
 Spectral
 ++++++++
+
+.. class:: SSP_Tools.Discretizers.Spectral
+
+	Spectral Fourier Collocation Method
+	
+	This class is a descendent of :mat:class:`SSP_Tools.Discretizers.Discretizer`. For a full description
+	of object attributes, and methods see the documentation for the parent class.
+	
+	.. mat:method:: Spectral('f', <>, 'em', <>)
+	
+		This class takes no additional constructor arguments than those required by 
+		:mat:meth:`SSP_Tools.Discretizers.Discretizer`
+
 
 WenoCore
 ++++++++
@@ -507,10 +597,6 @@ WenoCore
 	.. method:: WenoCore('f', <>, 'em', <>, 'kernel', <>[, 'weno_fcn', <>, 'epsilon', <>, 'p'])
 	
 		Initialize a WenoCore object.
-		
-		`f` is a function handle.  :math:`f(u)_x`.
-		
-		`em` is another function handle. :math:`f'(u)`.
 		
 		`epsilon` is the WENO shape parameter. Defaults to 1e-16.
 		
