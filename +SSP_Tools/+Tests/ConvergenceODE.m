@@ -13,6 +13,7 @@ classdef ConvergenceODE < SSP_Tools.Tests.Convergence
 			completed_problems = {};
 		
 			obj.log('\n\nODE Convergence Test\n');
+			obj.log('Test: %s\n', obj.repr());
 			obj.log('Problem: %s\n', obj.problem_template.repr());
 			obj.log('Time Stepping Method: %s\n', obj.problem_template.integrator.repr());
 			obj.log('\n');
