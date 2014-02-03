@@ -388,26 +388,62 @@ classdef PDE < SSP_Tools.TestProblems.TestProblem
 			repr_struct.Class = objclass.Name;
 			repr_struct.IC = func2str(obj.uinit);
 			repr_struct.Domain = [obj.domain(1), obj.domain(end)];
-			repr_struct.t = obj.t;
+			
+			if ~isempty(obj.t)
+				repr_struct.t = obj.t;
+			end
+			
+			if ~isempty(obj.dt)
+				repr_struct.dt = obj.dt;
+			end
+			
+			if ~isempty(obj.x)
+				repr_struct.dx = min(diff(obj.x));
+			end
+			
+			if ~isempty(obj.x)
+				repr_struct.N = numel(obj.x);
+			end
+			
 		end
 		
 		function id_string = repr(obj)
 		% Return a structure containing information about the
 		% commands supported by this class.
+
 			repr_struct = obj.get_repr();
 			
-			if isempty(repr_struct.t)
-				id_fmt = '< %s: initial_condition=%s domain=[%g, %g] >';
-				id_string = sprintf(id_fmt, repr_struct.Class, ...
-													repr_struct.IC, ...
-													repr_struct.Domain(1), repr_struct.Domain(2) );
-			else
-				id_fmt = '< %s: initial_condition=%s domain=[%g, %g] t=%g >';
-				id_string = sprintf(id_fmt, repr_struct.Class, ...
-													repr_struct.IC, ...
-													repr_struct.Domain(1), repr_struct.Domain(2),...
-													repr_struct.t );
+			% First include the default repr values
+			id_fmt = '<%s: initial_condition=%s domain=[%g, %g]%%s >';
+			
+			id_string = sprintf(id_fmt, repr_struct.Class, ...
+			                           repr_struct.IC, ...
+			                           repr_struct.Domain(1), repr_struct.Domain(2) );
+	
+			for field={'Class', 'IC', 'Domain'}
+				field=field{1};
+				repr_struct = rmfield(repr_struct, field);
 			end
+			
+			% Add any additional fields to the id_string by iterating over 
+			% the ones that are still left in the structure.
+			additional_fields = '';
+			addn_fields = fieldnames(repr_struct);
+			for k=1:numel(addn_fields)
+				field = addn_fields{k};
+				if ~isempty(repr_struct.(field))
+					% Try to get the formatting of the data correct.
+					if isnumeric(repr_struct.(field))
+						fmt = '%g';
+					else
+						fmt = '%s';
+					end	
+					additional_fields = [ additional_fields, ' ', sprintf(['%s=', fmt], field, repr_struct.(field)) ];
+				end
+			end
+			
+			id_string = sprintf(id_string, additional_fields);
+			
 		end
 	
 		function parameters = get_parameters(obj)
