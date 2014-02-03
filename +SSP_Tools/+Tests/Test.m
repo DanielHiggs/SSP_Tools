@@ -67,7 +67,8 @@ classdef Test < handle
 		end
 		
 		function repr_str = repr(obj)
-			repr_str = sprintf('< %s >', obj.name);
+			objclass = metaclass(obj);
+			repr_str = sprintf('< %s >', objclass.Name);
 		end
 		
 		function print(obj, varargin)

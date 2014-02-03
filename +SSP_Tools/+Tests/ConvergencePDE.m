@@ -302,7 +302,8 @@ classdef ConvergencePDE < SSP_Tools.Tests.Convergence
 		
 		function repr_str = repr(obj)
 		% Return an identifying string representation of this object
-			repr_str = sprintf('< %s cfl=%g >', obj.name, obj.cfl);
+			objclass = metaclass(obj);
+			repr_str = sprintf('< %s cfl=%g >', objclass.Name, obj.cfl);
 		end
 		
 		function parameters = get_parameters(obj)
