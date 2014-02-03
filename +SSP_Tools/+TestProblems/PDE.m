@@ -392,14 +392,22 @@ classdef PDE < SSP_Tools.TestProblems.TestProblem
 		end
 		
 		function id_string = repr(obj)
-			
+		% Return a structure containing information about the
+		% commands supported by this class.
 			repr_struct = obj.get_repr();
-			id_fmt = '< %s: %s [%g, %g] t=%g >';
-			id_string = sprintf(id_fmt, repr_struct.Class, ...
-			                            repr_struct.IC, ...
-			                            repr_struct.Domain(1), repr_struct.Domain(2),...
-			                            repr_struct.t );
-		
+			
+			if isempty(repr_struct.t)
+				id_fmt = '< %s: initial_condition=%s domain=[%g, %g] >';
+				id_string = sprintf(id_fmt, repr_struct.Class, ...
+													repr_struct.IC, ...
+													repr_struct.Domain(1), repr_struct.Domain(2) );
+			else
+				id_fmt = '< %s: initial_condition=%s domain=[%g, %g] t=%g >';
+				id_string = sprintf(id_fmt, repr_struct.Class, ...
+													repr_struct.IC, ...
+													repr_struct.Domain(1), repr_struct.Domain(2),...
+													repr_struct.t );
+			end
 		end
 	
 		function parameters = get_parameters(obj)
