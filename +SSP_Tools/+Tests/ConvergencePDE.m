@@ -48,6 +48,7 @@ classdef ConvergencePDE < SSP_Tools.Tests.Convergence
 			completed_problems = {};
 			
 			obj.log('PDE Convergence Test\n');
+			obj.log('Test: %s\n', obj.repr());
 			obj.log('Problem: %s\n', obj.problem_template.repr());
 			obj.log('Time Stepping Method: %s\n', obj.problem_template.integrator.repr());
 			obj.log('Spatial Discretization: %s\n', obj.problem_template.discretizer.repr());
@@ -299,6 +300,10 @@ classdef ConvergencePDE < SSP_Tools.Tests.Convergence
 			status = 0;
 		end
 		
+		function repr_str = repr(obj)
+		% Return an identifying string representation of this object
+			repr_str = sprintf('< %s cfl=%g >', obj.name, obj.cfl);
+		end
 		
 		function parameters = get_parameters(obj)
 			
