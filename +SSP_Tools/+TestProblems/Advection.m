@@ -64,6 +64,40 @@ classdef Advection < SSP_Tools.TestProblems.PDE
 		function em = em(obj, u);
 			em = max(abs(obj.fp(u, obj.x)));
 		end
+		
+		function repr_struct = get_repr(obj)
+			% Get a machine readable representation of this
+			% class
+			
+			objclass = metaclass(obj);
+			repr_struct.Class = objclass.Name;
+			repr_struct.IC = func2str(obj.uinit);
+			repr_struct.Domain = [obj.domain(1), obj.domain(end)];
+			repr_struct.t = obj.t;
+			repr_struct.a = obj.a;
+		end
+		
+		function id_string = repr(obj)
+		% Return a structure containing information about the
+		% commands supported by this class.
+			repr_struct = obj.get_repr();
+			
+			if isempty(repr_struct.t)
+				id_fmt = '< %s: a=%g initial_condition=%s domain=[%g, %g] >';
+				id_string = sprintf(id_fmt, repr_struct.Class, ...
+													repr_struct.a, ...
+													repr_struct.IC, ...
+													repr_struct.Domain(1), repr_struct.Domain(2) );
+			else
+				id_fmt = '< %s: a=%g initial_condition=%s domain=[%g, %g] t=%g >';
+				id_string = sprintf(id_fmt, repr_struct.Class, ...
+													repr_struct.a, ...
+													repr_struct.IC, ...
+													repr_struct.Domain(1), repr_struct.Domain(2),...
+													repr_struct.t );
+			end
+		end
+		
 	
 	end
 	
