@@ -225,37 +225,11 @@ classdef RK < SSP_Tools.Integrators.Integrator
 		function repr_struct = get_repr(obj)
 			% Get a machine readable representation of this
 			% class
-			
-			objclass = metaclass(obj);
-			repr_struct.Class = objclass.Name;
-			
-			repr_struct.A = obj.alpha;
-			repr_struct.B = obj.b;
-			repr_struct.C = obj.c;
-			
-			repr_struct.Name = obj.name;
-			
-			repr_struct.File = obj.file;
+			repr_struct = get_repr@SSP_Tools.Integrators.Integrator(obj);
 			
 			if ~isempty(obj.file)
-				[status, md5sum] = system(['md5 -q ', sprintf('"%s"', obj.file)]);
-				repr_struct.Md5 = md5sum;
-			else
-				repr_struct.Md5 = [];
+				repr_struct.coefficients = obj.file;
 			end
-			
-			
-		end
-		
-		function id_string = repr(obj)
-			% Provide a textual representation of the object
-			% that a human can use to identify it
-			
-			repr_struct = obj.get_repr();
-			
-			id_fmt = '< %s: %s >';
-			id_string = sprintf(id_fmt, repr_struct.Class, ...
-			                            repr_struct.Name );
 			
 		end
 		

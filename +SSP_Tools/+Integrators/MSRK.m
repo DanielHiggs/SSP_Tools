@@ -464,56 +464,43 @@ classdef MSRK < SSP_Tools.Integrators.Integrator
 				return
 			end
 		end
-			
-
-			
 		
 		function repr_struct = get_repr(obj)
 			% Get a machine readable representation of this
 			% class
-			
-			objclass = metaclass(obj);
-			repr_struct.Class = objclass.Name;			
-			repr_struct.Name = obj.name;
-			repr_struct.File = obj.file;
-			
-			if isa(obj.initial_integrator, 'SSP_Tools.Integrators.Integrator')
-				repr_struct.Init_Method = obj.initial_integrator.name;
-				
-			else
-				repr_struct.Init_Method = obj.initial_integrator;
-			end
+			repr_struct = get_repr@SSP_Tools.Integrators.Integrator(obj);
 			
 			if ~isempty(obj.file)
-				[status, md5sum] = system(['md5 -q ', sprintf('"%s"', obj.file)]);
-				repr_struct.Md5 = md5sum;
-			else
-				repr_struct.Md5 = [];
+				pat = 'Multistep Multistage \(MSRK\)/(.*)$';
+				idx = regexp(obj.file, pat, 'tokens');
+				idx = idx{1};
+				if ~isempty(idx)
+					file = sprintf('[%s]', idx{1});
+				else
+					file = obj.file
+				end
+				repr_struct.coefficients = file;
 			end
-			
-			
-		end
-		
-		function id_string = repr(obj)
-			% Provide a textual representation of the object
-			% that a human can use to identify it
-			
-			repr_struct = obj.get_repr();
 			
 			if isa(obj.initial_integrator, 'SSP_Tools.Integrators.Integrator')
-				priming_str = sprintf('priming=%s mini_dt_type=%s, mini_dt_c=%f', obj.initial_integrator.name, ...
-				                                                          obj.mini_dt_type, ...
-				                                                          obj.mini_dt_c );
+				initial_int_repr = obj.initial_integrator.get_repr()
+				repr_struct.initial_integrator = initial_int_repr.Class;
 			else
-				priming_str = sprintf('priming=%s', obj.initial_integrator);
+				repr_struct.initial_integrator = obj.initial_integrator;
 			end
-				
+			
+			if ~isempty(obj.mini_dt_type)
+				repr_struct.mini_dt_type = obj.mini_dt_type;
+			end 
+			
+			if ~isempty(obj.mini_dt_c)
+				repr_struct.mini_dt_c = obj.mini_dt_c;
+			end
 			
 			
-			id_fmt = '< %s: %s %s >';
-			id_string = sprintf(id_fmt, repr_struct.Class, ...
-			                            repr_struct.Name, ...
-			                            priming_str);
+			
+
+			
 			
 		end
 	

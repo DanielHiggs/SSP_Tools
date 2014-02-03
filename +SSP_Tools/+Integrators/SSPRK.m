@@ -7,6 +7,7 @@ classdef SSPRK < SSP_Tools.Integrators.Integrator
 		c = [];
 		S = [];
 		v = [];
+		file = [];
 		
 		kron_products = [];
 		coefficient_directory = [];
@@ -37,6 +38,7 @@ classdef SSPRK < SSP_Tools.Integrators.Integrator
 			% Load the coefficients if specified.
 			if isstr(p.Results.coefficients)
 				coeffFile = p.Results.coefficients;
+				obj.file = coeffFile;
 				parameters = load(coeffFile);
 				coeffFileName = coeffFile(max(strfind(coeffFile, '/'))+1:end);
 				obj.name = ['SSP Runge-Kutta',' ',coeffFileName ];
@@ -251,34 +253,20 @@ classdef SSPRK < SSP_Tools.Integrators.Integrator
 		function repr_struct = get_repr(obj)
 			% Get a machine readable representation of this
 			% class
+			repr_struct = get_repr@SSP_Tools.Integrators.Integrator(obj);
 			
-			objclass = metaclass(obj);
-			repr_struct.Class = objclass.Name;
-			repr_struct.Name = obj.name;
-			
-%  			if ~isempty(obj.file)
-%  				[status, md5sum] = system(['md5 -q ', sprintf('"%s"', obj.file)]);
-%  				repr_struct.Md5 = md5sum;
-%  			else
-%  				repr_struct.Md5 = [];
-%  			end
-			
-			
+			if ~isempty(obj.file)
+				pat = 'Runge-Kutta \(Shu-Osher Form\)/(.*)$';
+				idx = regexp(obj.file, pat, 'tokens');
+				idx = idx{1};
+				if ~isempty(idx)
+					file = sprintf('[%s]', idx{1});
+				else
+					file = obj.file
+				end
+				repr_struct.coefficients = file;
+			end
 		end
-		
-		function id_string = repr(obj)
-			% Provide a textual representation of the object
-			% that a human can use to identify it
-			
-			repr_struct = obj.get_repr();
-			
-			id_fmt = '< %s: %s >';
-			id_string = sprintf(id_fmt, repr_struct.Class, ...
-			                            repr_struct.Name );
-			
-		end
-		
-		
 		
 	end
 end
