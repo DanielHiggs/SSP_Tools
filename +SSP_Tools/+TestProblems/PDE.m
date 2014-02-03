@@ -414,7 +414,7 @@ classdef PDE < SSP_Tools.TestProblems.TestProblem
 			repr_struct = obj.get_repr();
 			
 			% First include the default repr values
-			id_fmt = '<%s: initial_condition=%s domain=[%g, %g]%%s >';
+			id_fmt = '< %s: initial_condition=%s domain=[%g, %g]%%s >';
 			
 			id_string = sprintf(id_fmt, repr_struct.Class, ...
 			                           repr_struct.IC, ...
