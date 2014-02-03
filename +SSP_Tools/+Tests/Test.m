@@ -66,6 +66,10 @@ classdef Test < handle
 			end
 		end
 		
+		function repr_str = repr(obj)
+			repr_str = sprintf('< %s >', obj.name);
+		end
+		
 		function print(obj, varargin)
 		% Print a given string to the report buffer. If the test
 		% is being run verbosely, also print it to the console.
