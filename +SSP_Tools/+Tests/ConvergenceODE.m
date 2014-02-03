@@ -57,7 +57,7 @@ classdef ConvergenceODE < SSP_Tools.Tests.Convergence
 			obj.results = results;
 			obj.completed_problems = [ completed_problems{:} ];
 			
-			cellfun(@(line) obj.print('%s\n', line), obj.format_results());
+			cellfun(@(line) obj.log('%s\n', line), obj.format_results());
 			
 		end
 	
