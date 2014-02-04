@@ -402,7 +402,7 @@ classdef PDE < SSP_Tools.TestProblems.TestProblem
 			end
 			
 			if ~isempty(obj.x)
-				repr_struct.N = numel(obj.x);
+				repr_struct.N = numel(obj.x) - 1;
 			end
 			
 		end
