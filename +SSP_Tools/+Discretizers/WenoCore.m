@@ -194,10 +194,10 @@ classdef WenoCore < SSP_Tools.Discretizers.Discretizer
 		function name = get_name(obj)
 			repr = obj.get_repr();
 			
-			kernel_name = regexp(repr.Kernel, 'kernels\.(.*)', 'tokens');
+			kernel_name = regexp(repr.kernel, 'kernels\.(.*)', 'tokens');
 			kernel_name = kernel_name{1};
 			kernel_name = upper(kernel_name{1});
-			name = sprintf('%s epsilon=%g p=%d', kernel_name, repr.Epsilon, repr.P);
+			name = sprintf('%s epsilon=%g p=%d', kernel_name, repr.epsilon, repr.p);
 		end
 	end
 	
