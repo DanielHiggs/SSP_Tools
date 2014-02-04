@@ -133,15 +133,16 @@ classdef WenoCore < SSP_Tools.Discretizers.Discretizer
 			% Get the name of our class
 			objclass = metaclass(obj);
 			repr_struct.Class = objclass.Name;
+			repr_struct.name = [];
 			
 			% Get the kernel function
-			repr_struct.Kernel = ['@', func2str(obj.kernel)];
+			repr_struct.kernel = ['@', func2str(obj.kernel)];
 			
 			% Get the weno function
-			repr_struct.WenoFunction = ['@', func2str(obj.weno_fcn)];
+			repr_struct.weno_fcn = ['@', func2str(obj.weno_fcn)];
 			
-			repr_struct.Epsilon = obj.epsilon;
-			repr_struct.P = obj.p;
+			repr_struct.epsilon = obj.epsilon;
+			repr_struct.p = obj.p;
 			
 		end
 		
@@ -189,22 +190,6 @@ classdef WenoCore < SSP_Tools.Discretizers.Discretizer
 			                           
 			parameters = [parameters{:}];
 		end
-		
-		function id_string = repr(obj)
-			% Provide a textual representation of the object
-			% that a human can use to identify it
-			
-			repr_struct = obj.get_repr();
-			
-			id_fmt = '< %s: call=%s kernel=%s epsilon=%g p=%i >';
-			
-			id_string = sprintf(id_fmt, repr_struct.Class, ...
-			                            repr_struct.WenoFunction, ...
-			                            repr_struct.Kernel, ...
-			                            repr_struct.Epsilon, ...
-			                            repr_struct.P);
-		end
-		
 		
 		function name = get_name(obj)
 			repr = obj.get_repr();
