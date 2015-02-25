@@ -95,13 +95,13 @@ properties
 						
 			% Perform the implicit steps
 			
-			V  = kron(obj.V, eye(n));
+			V  = kron(obj.V, speye(n));
             %keyboard
 			
-% 			ALPHA_PLUS = kron(obj.alpha_plus(1:end-1,:),   eye(n));
-% 			ALPHA_MINUS = kron(obj.alpha_minus(1:end-1,:), eye(n));
-			ALPHA_PLUS = kron(obj.alpha_plus,   eye(n));
-			ALPHA_MINUS = kron(obj.alpha_minus, eye(n));            						
+% 			ALPHA_PLUS = kron(obj.alpha_plus(1:end-1,:),   speye(n));
+% 			ALPHA_MINUS = kron(obj.alpha_minus(1:end-1,:), speye(n));
+			ALPHA_PLUS = kron(obj.alpha_plus,   speye(n));
+			ALPHA_MINUS = kron(obj.alpha_minus, speye(n));            						
 			function res = func(k)	
 				upwind = k + dt/obj.r*obj.yPrimeFunc(k,t);
 				downwind = k + dt/obj.r*(obj.yDownwindFunc(k,t));
@@ -136,8 +136,8 @@ properties
 
 			% Perform the final explicit step.
 			
-% 			ALPHA_PLUSe = kron( obj.alpha_plus(end,:), speye(n));
-% 			ALPHA_MINUSe = kron( obj.alpha_minus(end,:), speye(n));
+% 			ALPHA_PLUSe = kron( obj.alpha_plus(end,:), spspeye(n));
+% 			ALPHA_MINUSe = kron( obj.alpha_minus(end,:), spspeye(n));
 % 			
 % 			upwind_explicit = K + dt/obj.r*obj.yPrimeFunc(K,t);
 % 			downwind_explicit = K + dt/obj.r*obj.yDownwindFunc(K,t);
@@ -149,7 +149,7 @@ properties
             u_next = K((s-1)*length(u)+1:end);
 
 %  			UN = obj.alpha_plus(end,:)';
-%  			U_NEXT = kron( UN, eye(n));
+%  			U_NEXT = kron( UN, speye(n));
 %  			u_next = K*U_NEXT;
 
 
