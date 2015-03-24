@@ -53,6 +53,7 @@ classdef RK < SSP_Tools.Integrators.Integrator
 			package_path = mfilename('fullpath');
 			dir_seps = strfind(package_path, '/');
 			package_path = package_path(1:dir_seps(end-1));
+            % this directory doesnt exist
 			obj.coefficient_directory = [package_path, 'Method Coefficients/Runge-Kutta (Butcher Form)'];
 			
 			% Load the coefficients if specified.
@@ -169,6 +170,7 @@ classdef RK < SSP_Tools.Integrators.Integrator
 				% The method is implicit
 				f =  @(k) k - (V*y) - dt*ALPHA*obj.yPrimeFunc(k,t);
 				y0 = [y; repmat(zeros(n,1), size(obj.alpha,1)-1,1)];
+                
 				[k,FVAL,EXITFLAG,OUTPUT] = obj.solver.call(f, y0);
 	
 				if EXITFLAG ~= 1
@@ -244,14 +246,18 @@ classdef RK < SSP_Tools.Integrators.Integrator
 			
 			if ~isempty(obj.isExplicit)
 				t = obj.isExplicit;
-			end
+            end
 			
+           
 			% Exception for forward euler
 			if length(obj.alpha) == 1 & obj.alpha == 0
 				t = true;
 			elseif length(obj.alpha) == 1 & obj.alpha == 1
 			% Exception for backwards euler
 				t = false;
+            elseif length(obj.alpha) == 1 & obj.alpha == 0.5
+                % midpoint method
+                t = false;
 			else
 				t = true;
 				i = 0;
