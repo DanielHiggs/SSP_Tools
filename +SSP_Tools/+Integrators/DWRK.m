@@ -95,12 +95,14 @@ properties
 						
 			% Perform the implicit steps
 			
-			V  = kron(obj.V, eye(n));
+			V  = kron(obj.V, speye(n));
+            %keyboard
 			
-			ALPHA_PLUS = kron(obj.alpha_plus(1:end-1,:),   eye(n));
-			ALPHA_MINUS = kron(obj.alpha_minus(1:end-1,:), eye(n));
-						
-			function res = func(k)		
+% 			ALPHA_PLUS = kron(obj.alpha_plus(1:end-1,:),   speye(n));
+% 			ALPHA_MINUS = kron(obj.alpha_minus(1:end-1,:), speye(n));
+			ALPHA_PLUS = kron(obj.alpha_plus,   speye(n));
+			ALPHA_MINUS = kron(obj.alpha_minus, speye(n));            						
+			function res = func(k)	
 				upwind = k + dt/obj.r*obj.yPrimeFunc(k,t);
 				downwind = k + dt/obj.r*(obj.yDownwindFunc(k,t));
 
@@ -116,7 +118,10 @@ properties
 			% Initial guess vector for the implicit solver. The first block
 			% is the current vector-value of u. The other blocks are all zeros.
 			% This seems to work best.
-			u_guess = [ u; repmat( zeros(n,1), m-2, 1) ];
+			%u_guess = [ u; repmat( zeros(n,1), m-2, 1) ];
+            u_guess = [ u; repmat( zeros(n,1), m-1, 1) ];
+
+            %keyboard
 			
 			% Call the implicit solver.
 			[K,FVAL,EXITFLAG,OUTPUT] = obj.solver.call(@func, u_guess);
@@ -131,16 +136,20 @@ properties
 
 			% Perform the final explicit step.
 			
-			ALPHA_PLUSe = kron( obj.alpha_plus(end,:), eye(n));
-			ALPHA_MINUSe = kron( obj.alpha_minus(end,:), eye(n));
-			
-			upwind_explicit = K + dt/obj.r*obj.yPrimeFunc(K,t);
-			downwind_explicit = K + dt/obj.r*obj.yDownwindFunc(K,t);
-			
-			u_next = ALPHA_PLUSe*upwind_explicit + ALPHA_MINUSe*downwind_explicit;
+% 			ALPHA_PLUSe = kron( obj.alpha_plus(end,:), spspeye(n));
+% 			ALPHA_MINUSe = kron( obj.alpha_minus(end,:), spspeye(n));
+% 			
+% 			upwind_explicit = K + dt/obj.r*obj.yPrimeFunc(K,t);
+% 			downwind_explicit = K + dt/obj.r*obj.yDownwindFunc(K,t);
+%             
+%             keyboard
+% 			
+% 			u_next = ALPHA_PLUSe*upwind_explicit + ALPHA_MINUSe*downwind_explicit;
+            s = size(obj.alpha_minus,1);
+            u_next = K((s-1)*length(u)+1:end);
 
 %  			UN = obj.alpha_plus(end,:)';
-%  			U_NEXT = kron( UN, eye(n));
+%  			U_NEXT = kron( UN, speye(n));
 %  			u_next = K*U_NEXT;
 
 
@@ -163,6 +172,9 @@ properties
 		end
 		
 		function [alpha_plus, alpha_minus] = makeAlpha(obj,beta, r)
+            
+            % first pad zeros to the last column
+            beta = [beta zeros(size(beta,1),1)];
 			beta_plus = beta;
 			beta_plus(beta<0) = 0;
 			
@@ -175,7 +187,7 @@ properties
 		
 		function V = makeV(obj, alpha_plus, alpha_minus)
 			V = 1 - (sum(alpha_plus,2) + sum(alpha_minus,2));
-			V = V(1:end-1);
+			%V = V(1:end-1);
 		end
 		
 		function parameters = get_parameters(obj)
